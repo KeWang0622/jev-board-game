@@ -42,6 +42,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p.add_argument("--plot", metavar="PATH", help="save belief-trajectory plot (single config)")
     p.add_argument("--json", metavar="PATH", help="dump results as JSON")
+    p.add_argument(
+        "--watch",
+        action="store_true",
+        help="God's-eye view: replay ONE game round-by-round with all hidden info",
+    )
     return p
 
 
@@ -49,6 +54,20 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     prefer = {"auto": None, "offline": False, "live": True}[args.backend]
     backend = get_backend(prefer_live=prefer)
+
+    if args.watch:
+        from .games.undercover import Undercover
+        from .replay import narrate
+
+        game = Undercover(
+            backend=backend,
+            n_players=args.players[0],
+            max_reveal=args.max_reveal[0],
+            seed=args.seed,
+        )
+        print(f"backend: {backend.name}\n")
+        print(narrate(game.play()))
+        return 0
 
     results = sweep(
         backend,

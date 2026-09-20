@@ -154,6 +154,8 @@ class Undercover(SocialDeductionGame):
         result.beliefs = beliefs
         result.transcript = transcript
         result.votes = all_votes
+        result.players = players
+        result.undercover_id = undercover_id
         return result
 
     def _resolve_vote(

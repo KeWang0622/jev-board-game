@@ -44,6 +44,9 @@ pip install -e ".[dev]"          # add ",plots" for trajectory PNGs, ",live" for
 ## Quickstart
 
 ```bash
+# God's-eye view: WATCH one game play out round-by-round (clues, suspicion, votes)
+jev-undercover --watch --players 5 --seed 3
+
 # 20 offline games of 5-player Undercover, with calibration report
 jev-undercover --games 20 --players 5
 

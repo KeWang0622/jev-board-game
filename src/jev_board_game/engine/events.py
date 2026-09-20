@@ -61,3 +61,5 @@ class GameResult:
     beliefs: list[BeliefRecord] = field(default_factory=list)
     transcript: list[Clue] = field(default_factory=list)
     votes: list[Vote] = field(default_factory=list)
+    players: list[Player] = field(default_factory=list)
+    undercover_id: str = ""
