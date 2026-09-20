@@ -1,0 +1,133 @@
+{
+  "description": "Word pairs for Undercover (Who-Is-The-Spy). Civilians receive `civilian`, the undercover receives `undercover` (a semantically close but distinct word). Each word ships a bank of candidate clues at varying `reveal` levels (0=very vague .. 2=quite revealing); agents SELECT a clue with Jev rather than generating text.",
+  "pairs": [
+    {
+      "civilian": "coffee",
+      "undercover": "tea",
+      "clues": {
+        "coffee": [
+          {"text": "a warm drink many people have in the morning", "reveal": 0},
+          {"text": "it can be bitter and gives you energy", "reveal": 1},
+          {"text": "often served as espresso or with milk foam", "reveal": 2}
+        ],
+        "tea": [
+          {"text": "a warm drink many people have in the morning", "reveal": 0},
+          {"text": "it can be soothing and comes in many flavors", "reveal": 1},
+          {"text": "you steep the leaves in hot water in a cup", "reveal": 2}
+        ]
+      }
+    },
+    {
+      "civilian": "cat",
+      "undercover": "dog",
+      "clues": {
+        "cat": [
+          {"text": "a common household pet", "reveal": 0},
+          {"text": "it is independent and cleans itself", "reveal": 1},
+          {"text": "it purrs and likes to chase small things", "reveal": 2}
+        ],
+        "dog": [
+          {"text": "a common household pet", "reveal": 0},
+          {"text": "it is loyal and enjoys company", "reveal": 1},
+          {"text": "it fetches and likes going for walks", "reveal": 2}
+        ]
+      }
+    },
+    {
+      "civilian": "guitar",
+      "undercover": "violin",
+      "clues": {
+        "guitar": [
+          {"text": "a musical instrument with strings", "reveal": 0},
+          {"text": "you often strum it with your hand", "reveal": 1},
+          {"text": "popular in rock bands around a campfire", "reveal": 2}
+        ],
+        "violin": [
+          {"text": "a musical instrument with strings", "reveal": 0},
+          {"text": "you often play it with a bow", "reveal": 1},
+          {"text": "common in a classical orchestra section", "reveal": 2}
+        ]
+      }
+    },
+    {
+      "civilian": "apple",
+      "undercover": "pear",
+      "clues": {
+        "apple": [
+          {"text": "a fruit that grows on a tree", "reveal": 0},
+          {"text": "it is crisp and often red or green", "reveal": 1},
+          {"text": "keeps the doctor away, the saying goes", "reveal": 2}
+        ],
+        "pear": [
+          {"text": "a fruit that grows on a tree", "reveal": 0},
+          {"text": "it is soft and wider at the bottom", "reveal": 1},
+          {"text": "it has a distinctive bell-like shape", "reveal": 2}
+        ]
+      }
+    },
+    {
+      "civilian": "train",
+      "undercover": "bus",
+      "clues": {
+        "train": [
+          {"text": "a way to travel to another place", "reveal": 0},
+          {"text": "it can carry a lot of passengers at once", "reveal": 1},
+          {"text": "it runs along rails and has many carriages", "reveal": 2}
+        ],
+        "bus": [
+          {"text": "a way to travel to another place", "reveal": 0},
+          {"text": "it can carry a lot of passengers at once", "reveal": 1},
+          {"text": "it stops at the corner and runs on the road", "reveal": 2}
+        ]
+      }
+    },
+    {
+      "civilian": "beach",
+      "undercover": "pool",
+      "clues": {
+        "beach": [
+          {"text": "a place people go to relax in summer", "reveal": 0},
+          {"text": "you can swim and lie in the sun there", "reveal": 1},
+          {"text": "there is sand, waves, and salty water", "reveal": 2}
+        ],
+        "pool": [
+          {"text": "a place people go to relax in summer", "reveal": 0},
+          {"text": "you can swim and cool off there", "reveal": 1},
+          {"text": "it has clear water, tiles, and a deep end", "reveal": 2}
+        ]
+      }
+    },
+    {
+      "civilian": "pen",
+      "undercover": "pencil",
+      "clues": {
+        "pen": [
+          {"text": "something you use to write", "reveal": 0},
+          {"text": "you hold it in your hand on paper", "reveal": 1},
+          {"text": "it uses ink that can be hard to erase", "reveal": 2}
+        ],
+        "pencil": [
+          {"text": "something you use to write", "reveal": 0},
+          {"text": "you hold it in your hand on paper", "reveal": 1},
+          {"text": "it has graphite and you can rub it out", "reveal": 2}
+        ]
+      }
+    },
+    {
+      "civilian": "moon",
+      "undercover": "sun",
+      "clues": {
+        "moon": [
+          {"text": "something you can see in the sky", "reveal": 0},
+          {"text": "it is round and far away from us", "reveal": 1},
+          {"text": "it appears at night and changes shape", "reveal": 2}
+        ],
+        "sun": [
+          {"text": "something you can see in the sky", "reveal": 0},
+          {"text": "it is round and far away from us", "reveal": 1},
+          {"text": "it appears in the day and gives us heat", "reveal": 2}
+        ]
+      }
+    }
+  ]
+}

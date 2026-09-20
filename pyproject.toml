@@ -1,0 +1,55 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "jev-board-game"
+version = "0.1.0"
+description = "Belief as a primitive: instrumenting social-deduction games with a calibrated System-One model (Jev)."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Ke Wang" }]
+keywords = ["jev", "typesafe", "system-one", "social-deduction", "calibration", "belief", "llm-agents"]
+dependencies = [
+    "numpy>=1.24",
+]
+
+[project.optional-dependencies]
+# Live Jev backend. Without this, the deterministic offline backend is used.
+live = ["typesafe-sdk>=1.0"]
+# Plotting for the analysis harness.
+plots = ["matplotlib>=3.7"]
+dev = [
+    "pytest>=7.4",
+    "pytest-cov>=4.1",
+    "ruff>=0.5",
+    "mypy>=1.8",
+]
+
+[project.scripts]
+jev-undercover = "jev_board_game.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/jev_board_game"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+strict = true
+packages = ["jev_board_game"]
+mypy_path = "src"
+
+[[tool.mypy.overrides]]
+module = ["matplotlib.*", "typesafe_sdk.*"]
+ignore_missing_imports = true
