@@ -50,7 +50,7 @@ jobs:
       - name: Verify package data is bundled
         run: |
           python -m zipfile -l dist/*.whl | grep -E "data/undercover_words.json|web/viewer.html|py.typed"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: dist
           path: dist/*
