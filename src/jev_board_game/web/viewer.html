@@ -22,99 +22,88 @@
       linear-gradient(160deg,var(--bg0),var(--bg1));
     min-height:100%;
   }
-  header{
-    display:flex;align-items:center;gap:14px;padding:16px 22px;
-    border-bottom:1px solid var(--stroke);backdrop-filter:blur(6px);
-  }
-  header .logo{
-    width:34px;height:34px;border-radius:10px;flex:0 0 auto;
-    background:conic-gradient(from 210deg,var(--accent),var(--civ),var(--spy),var(--accent));
-    box-shadow:0 6px 24px rgba(139,125,255,.4);
-  }
+  header{display:flex;align-items:center;gap:14px;padding:16px 22px;border-bottom:1px solid var(--stroke);backdrop-filter:blur(6px)}
+  header .logo{width:34px;height:34px;border-radius:10px;flex:0 0 auto;background:conic-gradient(from 210deg,var(--accent),var(--civ),var(--spy),var(--accent));box-shadow:0 6px 24px rgba(139,125,255,.4)}
   header h1{font-size:18px;margin:0;font-weight:700;letter-spacing:.3px}
   header .sub{color:var(--dim);font-size:13px;margin-left:2px}
   header .spacer{flex:1}
-  select,button{
-    font:inherit;color:var(--txt);background:var(--panel);
-    border:1px solid var(--stroke);border-radius:10px;padding:8px 12px;cursor:pointer;
-    transition:.15s;
-  }
+  select,button{font:inherit;color:var(--txt);background:var(--panel);border:1px solid var(--stroke);border-radius:10px;padding:8px 12px;cursor:pointer;transition:.15s}
   button:hover,select:hover{border-color:var(--accent);background:rgba(139,125,255,.15)}
   button:disabled{opacity:.4;cursor:default}
-  .wrap{display:grid;grid-template-columns:1fr 340px;gap:18px;padding:18px 22px;max-width:1280px;margin:0 auto}
-  @media(max-width:980px){.wrap{grid-template-columns:1fr}}
-  .stage{
-    position:relative;border:1px solid var(--stroke);border-radius:20px;
-    background:var(--panel);overflow:hidden;min-height:560px;
-  }
-  #board{display:block;width:100%;height:560px}
-  .table-label{
-    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-    text-align:center;pointer-events:none;
-  }
+  .wrap{max-width:1280px;margin:0 auto;padding:18px 22px}
+  .top{display:grid;grid-template-columns:1fr 320px;gap:18px}
+  @media(max-width:980px){.top{grid-template-columns:1fr}}
+  .stage{position:relative;border:1px solid var(--stroke);border-radius:20px;background:var(--panel);overflow:hidden;min-height:520px}
+  #board{display:block;width:100%;height:520px}
+  .table-label{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
   .table-label .rd{font-size:13px;color:var(--dim);letter-spacing:2px;text-transform:uppercase}
   .table-label .phase{font-size:22px;font-weight:700;margin-top:4px}
-  .player{position:absolute;transform:translate(-50%,-50%);width:150px;text-align:center;transition:.35s}
-  .player .avatar{
-    width:56px;height:56px;border-radius:50%;margin:0 auto 6px;
-    display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;
-    background:linear-gradient(160deg,#2a3566,#1a2244);border:2px solid var(--stroke);
-    box-shadow:0 8px 20px rgba(0,0,0,.35);transition:.35s;
-  }
-  .player.spy .avatar{border-color:var(--spy);box-shadow:0 0 0 3px rgba(255,93,115,.25),0 8px 20px rgba(0,0,0,.35)}
-  .player.speaking .avatar{border-color:var(--accent);box-shadow:0 0 0 4px rgba(139,125,255,.35)}
-  .player.dead{opacity:.32;filter:grayscale(.7)}
-  .player.dead .avatar::after{content:"✕";position:absolute;color:var(--spy);font-size:30px}
-  .player .name{font-size:13px;font-weight:600}
-  .player .word{font-size:12px;color:var(--dim);margin-top:2px}
-  .player.spy .word{color:var(--spy);font-weight:700}
-  .player .tag{font-size:10px;color:var(--spy);letter-spacing:.5px}
-  .bubble{
-    max-width:180px;margin:6px auto 0;padding:7px 10px;border-radius:12px;font-size:12px;line-height:1.3;
-    background:rgba(78,163,255,.14);border:1px solid rgba(78,163,255,.35);opacity:0;transform:translateY(6px);
-    transition:.3s;
-  }
-  .player.spy .bubble{background:rgba(255,93,115,.14);border-color:rgba(255,93,115,.4)}
+  .seat{position:absolute;transform:translate(-50%,-50%);width:120px;text-align:center;transition:.35s}
+  .seat .avatar{position:relative;width:52px;height:52px;border-radius:50%;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;background:linear-gradient(160deg,#2a3566,#1a2244);border:2px solid var(--stroke);box-shadow:0 8px 20px rgba(0,0,0,.35);transition:.35s}
+  .seat.spy .avatar{border-color:var(--spy);box-shadow:0 0 0 3px rgba(255,93,115,.25),0 8px 20px rgba(0,0,0,.35)}
+  .seat.speaking .avatar{border-color:var(--accent);box-shadow:0 0 0 4px rgba(139,125,255,.4)}
+  .seat.dead{opacity:.32;filter:grayscale(.7)}
+  .seat.dead .avatar::after{content:"✕";position:absolute;color:var(--spy);font-size:26px}
+  .seat .jevtag{position:absolute;right:-6px;top:-6px;background:var(--accent);color:#0b1020;font-size:9px;font-weight:800;border-radius:8px;padding:1px 5px;letter-spacing:.5px}
+  .seat .name{font-size:13px;font-weight:600}
+  .seat .word{font-size:12px;color:var(--dim);margin-top:1px}
+  .seat.spy .word{color:var(--spy);font-weight:700}
+  .bubble{max-width:150px;margin:6px auto 0;padding:6px 9px;border-radius:12px;font-size:11.5px;line-height:1.3;background:rgba(78,163,255,.14);border:1px solid rgba(78,163,255,.35);opacity:0;transform:translateY(6px);transition:.3s}
+  .seat.spy .bubble{background:rgba(255,93,115,.14);border-color:rgba(255,93,115,.4)}
   .bubble.show{opacity:1;transform:none}
-  .susp{margin-top:6px;opacity:0;transition:.3s}
-  .susp.show{opacity:1}
-  .susp .row{display:flex;align-items:center;gap:6px;font-size:11px;margin-top:2px}
-  .susp .who{width:22px;color:var(--dim)}
-  .susp .track{flex:1;height:7px;border-radius:6px;background:rgba(255,255,255,.08);overflow:hidden}
-  .susp .fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--civ),var(--accent));transition:width .5s}
-  .susp .fill.hit{background:linear-gradient(90deg,var(--good),#7effc0)}
-  .susp .pct{width:30px;text-align:right;color:var(--dim)}
-  .vote-badge{
-    position:absolute;transform:translate(-50%,-50%);background:var(--warn);color:#241a00;
-    font-weight:800;font-size:12px;border-radius:20px;padding:2px 8px;box-shadow:0 4px 12px rgba(0,0,0,.4);
-    opacity:0;transition:.3s;
-  }
+  .vote-badge{position:absolute;transform:translate(-50%,-50%);background:var(--warn);color:#241a00;font-weight:800;font-size:12px;border-radius:20px;padding:2px 8px;box-shadow:0 4px 12px rgba(0,0,0,.4);opacity:0;transition:.3s}
   .vote-badge.show{opacity:1}
-  .controls{
-    display:flex;align-items:center;gap:10px;padding:14px 18px;border-top:1px solid var(--stroke);
-    position:absolute;left:0;right:0;bottom:0;background:rgba(10,14,30,.55);backdrop-filter:blur(8px);
-  }
+  .controls{display:flex;align-items:center;gap:10px;padding:12px 16px;border-top:1px solid var(--stroke);position:absolute;left:0;right:0;bottom:0;background:rgba(10,14,30,.55);backdrop-filter:blur(8px)}
   .controls .prog{flex:1;height:6px;border-radius:6px;background:rgba(255,255,255,.1);overflow:hidden}
   .controls .prog>i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--civ));width:0}
   .side{display:flex;flex-direction:column;gap:14px}
   .card{border:1px solid var(--stroke);border-radius:16px;background:var(--panel);padding:14px 16px}
   .card h3{margin:0 0 10px;font-size:13px;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim)}
-  .kv{display:flex;justify-content:space-between;font-size:14px;margin:6px 0}
-  .kv b{font-weight:700}
+  .kv{display:flex;justify-content:space-between;align-items:center;font-size:14px;margin:6px 0}
   .pill{display:inline-block;padding:2px 10px;border-radius:20px;font-size:12px;font-weight:700}
   .pill.civ{background:rgba(78,163,255,.2);color:var(--civ)}
   .pill.spy{background:rgba(255,93,115,.2);color:var(--spy)}
-  .log{font-size:12.5px;line-height:1.5;max-height:230px;overflow:auto}
-  .log .ev{padding:6px 0;border-bottom:1px dashed rgba(255,255,255,.08);color:var(--dim)}
+  .log{font-size:12.5px;line-height:1.5;max-height:180px;overflow:auto}
+  .log .ev{padding:5px 0;border-bottom:1px dashed rgba(255,255,255,.08);color:var(--dim)}
   .log .ev b{color:var(--txt)}
-  .winner{
-    position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;
-    background:radial-gradient(600px 400px at 50% 40%,rgba(139,125,255,.25),rgba(10,14,30,.9));
-    backdrop-filter:blur(3px);z-index:5;
-  }
+  .winner{position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;background:radial-gradient(600px 400px at 50% 40%,rgba(139,125,255,.25),rgba(10,14,30,.9));backdrop-filter:blur(3px);z-index:5}
   .winner.show{display:flex}
-  .winner .big{font-size:40px;font-weight:900;letter-spacing:1px}
+  .winner .big{font-size:38px;font-weight:900;letter-spacing:1px}
   .winner .small{color:var(--dim);margin-top:6px}
+
+  /* Agents readout */
+  .agents-head{display:flex;align-items:baseline;gap:10px;margin:22px 2px 12px}
+  .agents-head h2{font-size:16px;margin:0}
+  .agents-head .note{color:var(--dim);font-size:12px}
+  .agents{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+  .agent{border:1px solid var(--stroke);border-radius:16px;background:var(--panel);padding:14px;transition:.25s;opacity:.55}
+  .agent.active{opacity:1;border-color:var(--accent);box-shadow:0 8px 30px rgba(139,125,255,.18)}
+  .agent.dead{opacity:.3;filter:grayscale(.6)}
+  .agent .ahead{display:flex;align-items:center;gap:10px}
+  .agent .aav{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;background:linear-gradient(160deg,#2a3566,#1a2244);border:2px solid var(--stroke)}
+  .agent.spy .aav{border-color:var(--spy)}
+  .agent .aname{font-weight:700}
+  .agent .abadge{font-size:9px;font-weight:800;color:#0b1020;background:var(--accent);border-radius:7px;padding:1px 5px;letter-spacing:.5px;margin-left:4px}
+  .agent .aword{margin-left:auto;font-size:12px;color:var(--dim)}
+  .agent.spy .aword{color:var(--spy);font-weight:700}
+  .agent .line{display:flex;gap:8px;margin-top:10px;font-size:13px;line-height:1.4}
+  .agent .line .ic{width:18px;flex:0 0 auto;text-align:center;opacity:.9}
+  .agent .said{color:var(--txt)}
+  .agent .accuse b{color:var(--warn)}
+  .agent .accuse b.hit{color:var(--good)}
+  .agent .reason{color:var(--dim);font-style:italic}
+  .agent .bars{margin-top:10px;display:none}
+  .agent.reveal .bars{display:block}
+  .agent .brow{display:flex;align-items:center;gap:7px;font-size:11px;margin-top:3px}
+  .agent .brow .who{width:24px;color:var(--dim)}
+  .agent .brow .track{flex:1;height:8px;border-radius:6px;background:rgba(255,255,255,.08);overflow:hidden}
+  .agent .brow .fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--civ),var(--accent));transition:width .5s}
+  .agent .brow .fill.hit{background:linear-gradient(90deg,var(--good),#7effc0)}
+  .agent .brow .pct{width:32px;text-align:right;color:var(--dim)}
+  .agent .conf{font-size:11px;color:var(--dim);margin-top:8px}
+  .agent .conf .tagc{font-weight:700}
+  .agent .conf .strong{color:var(--good)} .agent .conf .moderate{color:var(--warn)} .agent .conf .weak{color:var(--spy)}
+  .footnote{color:var(--dim);font-size:11.5px;margin:16px 2px 4px;line-height:1.5}
   .legend{font-size:12px;color:var(--dim);display:flex;gap:14px;flex-wrap:wrap}
   .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:middle}
 </style>
@@ -124,6 +113,7 @@
   <div class="logo"></div>
   <div>
     <h1>Jev Board Game <span class="sub">· Undercover · 上帝视角</span></h1>
+    <div class="sub">every player is an independent <b>Jev</b> agent</div>
   </div>
   <div class="spacer"></div>
   <label class="sub" for="gamesel">game</label>
@@ -131,240 +121,211 @@
 </header>
 
 <div class="wrap">
-  <div class="stage">
-    <svg id="board"></svg>
-    <div class="table-label"><div class="rd" id="rdlabel">round</div><div class="phase" id="phaselabel">—</div></div>
-    <div id="players"></div>
-    <div id="votes"></div>
-    <div class="winner" id="winner"><div class="big" id="winbig"></div><div class="small" id="winsmall"></div></div>
-    <div class="controls">
-      <button id="prev">◀</button>
-      <button id="play">▶ Play</button>
-      <button id="next">▶▶</button>
-      <div class="prog"><i id="prog"></i></div>
-      <select id="speed">
-        <option value="1600">1×</option>
-        <option value="900" selected>1.5×</option>
-        <option value="500">3×</option>
-      </select>
+  <div class="top">
+    <div class="stage">
+      <svg id="board"></svg>
+      <div class="table-label"><div class="rd" id="rdlabel">round</div><div class="phase" id="phaselabel">—</div></div>
+      <div id="seats"></div>
+      <div id="votes"></div>
+      <div class="winner" id="winner"><div class="big" id="winbig"></div><div class="small" id="winsmall"></div></div>
+      <div class="controls">
+        <button id="prev">◀</button>
+        <button id="play">▶ Play</button>
+        <button id="next">▶▶</button>
+        <div class="prog"><i id="prog"></i></div>
+        <select id="speed">
+          <option value="1800">1×</option>
+          <option value="1000" selected>1.5×</option>
+          <option value="550">3×</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="side">
+      <div class="card">
+        <h3>Match</h3>
+        <div class="kv"><span>Players (Jev agents)</span><b id="m-players">—</b></div>
+        <div class="kv"><span>Jev backend</span><b id="m-backend">—</b></div>
+        <div class="kv"><span>Undercover</span><b id="m-spy" class="pill spy">—</b></div>
+        <div class="kv"><span>Winner</span><b id="m-winner">—</b></div>
+      </div>
+      <div class="card">
+        <h3>Event log</h3>
+        <div class="log" id="log"></div>
+      </div>
+      <div class="card">
+        <h3>Legend</h3>
+        <div class="legend">
+          <span><span class="dot" style="background:var(--civ)"></span>civilian</span>
+          <span><span class="dot" style="background:var(--spy)"></span>undercover</span>
+          <span><span class="dot" style="background:var(--good)"></span>correct guess</span>
+          <span><span class="dot" style="background:var(--warn)"></span>votes</span>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="side">
-    <div class="card">
-      <h3>Match</h3>
-      <div class="kv"><span>Players</span><b id="m-players">—</b></div>
-      <div class="kv"><span>Backend</span><b id="m-backend">—</b></div>
-      <div class="kv"><span>Undercover</span><b id="m-spy" class="pill spy">—</b></div>
-      <div class="kv"><span>Winner</span><b id="m-winner">—</b></div>
-    </div>
-    <div class="card">
-      <h3>Event log</h3>
-      <div class="log" id="log"></div>
-    </div>
-    <div class="card">
-      <h3>Legend</h3>
-      <div class="legend">
-        <span><span class="dot" style="background:var(--civ)"></span>civilian</span>
-        <span><span class="dot" style="background:var(--spy)"></span>undercover</span>
-        <span><span class="dot" style="background:var(--good)"></span>correct suspicion</span>
-        <span><span class="dot" style="background:var(--warn)"></span>votes</span>
-      </div>
-    </div>
+  <div class="agents-head">
+    <h2>Agents — <span id="ah-phase">this round</span></h2>
+    <span class="note" id="ah-note">what each Jev said, who it accuses, and why</span>
+  </div>
+  <div class="agents" id="agents"></div>
+
+  <div class="footnote">
+    🧠 <b>About the reasons.</b> Jev returns a <b>typed, calibrated probability distribution</b>, not prose.
+    Each “reason” here is derived faithfully from that distribution and the clues (the accusation, its strength
+    vs. a uniform guess, and the clue that drove it) — it is never a generated explanation.
   </div>
 </div>
 
 <script>
 const GAMES = /*__GAMES__*/[];
-
 const $ = s => document.querySelector(s);
-const board = $("#board"), playersEl = $("#players"), votesEl = $("#votes");
+const board=$("#board"), seatsEl=$("#seats"), votesEl=$("#votes"), agentsEl=$("#agents");
 let G=null, steps=[], cur=0, playing=false, timer=null, positions={};
 
 function buildSteps(g){
   const s=[{type:"intro"}];
-  g.rounds.forEach(r=>{
-    s.push({type:"clues",r},{type:"suspicion",r},{type:"votes",r},{type:"eliminated",r});
-  });
+  g.rounds.forEach(r=>s.push({type:"clues",r},{type:"suspicion",r},{type:"votes",r},{type:"eliminated",r}));
   s.push({type:"result"});
   return s;
 }
-function livingAt(g, roundIdx){
-  const dead=new Set();
-  for(const r of g.rounds){ if(r.index<roundIdx && r.eliminated) dead.add(r.eliminated); }
-  return g.players.filter(p=>!dead.has(p.id));
-}
 function deadBefore(g, step){
-  // players eliminated in rounds strictly before the current round, plus current if phase==eliminated
   const dead=new Set();
-  const upto = step.r===undefined?g.rounds.length:step.r;
+  const upto=step.r===undefined?g.rounds.length:step.r;
   for(const r of g.rounds){
     if(r.index<upto && r.eliminated) dead.add(r.eliminated);
-    if(r.index===upto && step.type==="eliminated" && r.eliminated) dead.add(r.eliminated);
-    if(r.index===upto && step.type==="result" && r.eliminated) dead.add(r.eliminated);
+    if(r.index===upto && (step.type==="eliminated"||step.type==="result") && r.eliminated) dead.add(r.eliminated);
   }
   if(step.type==="result"){ for(const r of g.rounds) if(r.eliminated) dead.add(r.eliminated); }
   return dead;
 }
+function wordOf(id){const p=G.players.find(p=>p.id===id);return p?p.secret:"?";}
 
 function layout(){
-  const W=board.clientWidth||board.parentElement.clientWidth, H=560;
+  const W=board.clientWidth||board.parentElement.clientWidth, H=520;
   board.setAttribute("viewBox",`0 0 ${W} ${H}`);
-  const cx=W/2, cy=H/2-10, rx=Math.min(W*0.36,360), ry=Math.min(H*0.34,190);
+  const cx=W/2, cy=H/2-6, rx=Math.min(W*0.36,360), ry=Math.min(H*0.34,175);
   positions={};
   const n=G.players.length;
-  G.players.forEach((p,i)=>{
-    const a=-Math.PI/2 + i*2*Math.PI/n;
-    positions[p.id]={x:cx+rx*Math.cos(a), y:cy+ry*Math.sin(a)};
-  });
-  positions.__center={x:cx,y:cy};
+  G.players.forEach((p,i)=>{const a=-Math.PI/2+i*2*Math.PI/n;positions[p.id]={x:cx+rx*Math.cos(a),y:cy+ry*Math.sin(a)};});
 }
 
-function renderPlayers(step){
-  const dead=deadBefore(G, step);
-  const round = step.r!==undefined ? G.rounds[step.r] : null;
-  playersEl.innerHTML="";
+function renderSeats(step){
+  const dead=deadBefore(G,step);
+  const round=step.r!==undefined?G.rounds[step.r]:null;
+  seatsEl.innerHTML="";
   G.players.forEach(p=>{
     const pos=positions[p.id];
     const el=document.createElement("div");
-    el.className="player"+(p.id===G.undercover_id?" spy":"")+(dead.has(p.id)?" dead":"");
-    el.style.left=pos.x+"px"; el.style.top=pos.y+"px";
+    el.className="seat"+(p.id===G.undercover_id?" spy":"")+(dead.has(p.id)?" dead":"");
+    el.style.left=pos.x+"px";el.style.top=pos.y+"px";
     const initial=p.id.replace(/[^0-9]/g,"")||p.id[0];
-    let clue="", susp="";
-    if(round && (step.type==="clues"||step.type==="suspicion"||step.type==="votes"||step.type==="eliminated")){
-      const c=round.clues.find(c=>c.speaker===p.id);
-      if(c) clue=`<div class="bubble show">“${c.text}”</div>`;
-    }
-    if(round && (step.type==="suspicion"||step.type==="votes"||step.type==="eliminated")){
-      const b=round.beliefs.find(b=>b.observer===p.id);
-      if(b){
-        const rows=Object.entries(b.distribution).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([pid,pr])=>{
-          const hit=pid===G.undercover_id;
-          return `<div class="row"><span class="who">${pid}</span>
-            <span class="track"><i class="fill${hit?' hit':''}" style="width:${Math.round(pr*100)}%"></i></span>
-            <span class="pct">${Math.round(pr*100)}%</span></div>`;
-        }).join("");
-        susp=`<div class="susp show">${rows}</div>`;
-      }
-    }
-    el.innerHTML=`<div class="avatar">${initial}</div>
-      <div class="name">${p.id}</div>
-      <div class="word">${p.secret||"?"}</div>
-      ${p.id===G.undercover_id?'<div class="tag">UNDERCOVER</div>':''}
-      ${clue}${susp}`;
-    playersEl.appendChild(el);
+    let clue="";
+    if(round){const c=round.clues.find(c=>c.speaker===p.id);if(c)clue=`<div class="bubble show">“${c.text}”</div>`;}
+    el.innerHTML=`<div class="avatar">${initial}<span class="jevtag">JEV</span></div>
+      <div class="name">${p.id}</div><div class="word">${p.secret||"?"}</div>${clue}`;
+    seatsEl.appendChild(el);
   });
 }
-
 function renderLines(step){
   board.innerHTML="";
-  if(!step.r&&step.r!==0) return;
+  if(step.r===undefined) return;
   const round=G.rounds[step.r];
   if(step.type==="suspicion"){
-    round.beliefs.forEach(b=>{
-      const from=positions[b.observer], to=positions[b.top];
-      if(!from||!to) return;
-      drawArrow(from,to,b.top===G.undercover_id?"var(--good)":"rgba(139,125,255,.5)",1+b.top_prob*5);
-    });
+    round.beliefs.forEach(b=>{const f=positions[b.observer],t=positions[b.top];if(f&&t)drawArrow(f,t,b.top===G.undercover_id?"var(--good)":"rgba(139,125,255,.55)",1+b.top_prob*5);});
   }
   if(step.type==="votes"||step.type==="eliminated"){
-    round.votes.forEach(v=>{
-      const from=positions[v.voter], to=positions[v.target];
-      if(!from||!to) return;
-      drawArrow(from,to,"var(--warn)",2.2);
-    });
+    round.votes.forEach(v=>{const f=positions[v.voter],t=positions[v.target];if(f&&t)drawArrow(f,t,"var(--warn)",2.2);});
   }
 }
 function drawArrow(a,b,color,w){
-  const ns="http://www.w3.org/2000/svg";
-  const line=document.createElementNS(ns,"line");
-  line.setAttribute("x1",a.x);line.setAttribute("y1",a.y);
-  line.setAttribute("x2",b.x);line.setAttribute("y2",b.y);
-  line.setAttribute("stroke",color);line.setAttribute("stroke-width",w);
-  line.setAttribute("stroke-linecap","round");line.setAttribute("opacity","0.7");
+  const ns="http://www.w3.org/2000/svg",line=document.createElementNS(ns,"line");
+  line.setAttribute("x1",a.x);line.setAttribute("y1",a.y);line.setAttribute("x2",b.x);line.setAttribute("y2",b.y);
+  line.setAttribute("stroke",color);line.setAttribute("stroke-width",w);line.setAttribute("stroke-linecap","round");line.setAttribute("opacity",".7");
   board.appendChild(line);
 }
-
 function renderVotes(step){
   votesEl.innerHTML="";
-  if(step.r===undefined) return;
-  if(step.type!=="votes"&&step.type!=="eliminated") return;
+  if(step.r===undefined||(step.type!=="votes"&&step.type!=="eliminated"))return;
   const round=G.rounds[step.r];
-  Object.entries(round.tally||{}).forEach(([pid,n])=>{
-    const pos=positions[pid]; if(!pos) return;
-    const b=document.createElement("div");
-    b.className="vote-badge show";
-    b.style.left=(pos.x+42)+"px"; b.style.top=(pos.y-38)+"px";
-    b.textContent="🗳 "+n;
-    votesEl.appendChild(b);
+  Object.entries(round.tally||{}).forEach(([pid,n])=>{const pos=positions[pid];if(!pos)return;const b=document.createElement("div");b.className="vote-badge show";b.style.left=(pos.x+40)+"px";b.style.top=(pos.y-36)+"px";b.textContent="🗳 "+n;votesEl.appendChild(b);});
+}
+
+function renderAgents(step){
+  agentsEl.innerHTML="";
+  const dead=deadBefore(G,step);
+  const round=step.r!==undefined?G.rounds[step.r]:null;
+  const reveal = round && (step.type==="suspicion"||step.type==="votes"||step.type==="eliminated");
+  const showClue = round && (step.type==="clues"||reveal);
+  G.players.forEach(p=>{
+    const el=document.createElement("div");
+    const isDead=dead.has(p.id);
+    el.className="agent"+(p.id===G.undercover_id?" spy":"")+(isDead?" dead":"")+((round&&!isDead)?" active":"")+(reveal?" reveal":"");
+    const initial=p.id.replace(/[^0-9]/g,"")||p.id[0];
+    const b = round ? round.beliefs.find(b=>b.observer===p.id) : null;
+    const clueText = round ? (round.clues.find(c=>c.speaker===p.id)||{}).text : "";
+
+    let said = showClue && clueText ? `<div class="line"><span class="ic">💬</span><span class="said">“${clueText}”</span></div>` : "";
+    let accuse="", reason="", bars="", conf="";
+    if(reveal && b){
+      const hit=b.top===G.undercover_id;
+      accuse=`<div class="line accuse"><span class="ic">🎯</span><span>accuses <b class="${hit?'hit':''}">${b.top}</b> · ${Math.round(b.top_prob*100)}%</span></div>`;
+      reason=`<div class="line reason"><span class="ic">🧠</span><span>${b.rationale?b.rationale.text:""}</span></div>`;
+      const rows=Object.entries(b.distribution).sort((a,c)=>c[1]-a[1]).slice(0,3).map(([pid,pr])=>{
+        const h=pid===G.undercover_id;
+        return `<div class="brow"><span class="who">${pid}</span><span class="track"><i class="fill${h?' hit':''}" style="width:${Math.round(pr*100)}%"></i></span><span class="pct">${Math.round(pr*100)}%</span></div>`;
+      }).join("");
+      bars=`<div class="bars">${rows}</div>`;
+      const st=b.rationale?b.rationale.strength:"weak";
+      conf=`<div class="conf">accusation strength: <span class="tagc ${st}">${st}</span> · confidence ${Math.round((b.confidence||0)*100)}%</div>`;
+    }
+    el.innerHTML=`<div class="ahead"><div class="aav">${initial}</div>
+        <span class="aname">${p.id}</span><span class="abadge">JEV</span>
+        <span class="aword">word: ${p.secret||"?"}${p.id===G.undercover_id?" · SPY":""}</span></div>
+      ${said}${accuse}${reason}${bars}${conf}`;
+    agentsEl.appendChild(el);
   });
 }
 
 const PHASE={intro:"Words dealt",clues:"Clues",suspicion:"Suspicion",votes:"Voting",eliminated:"Elimination",result:"Result"};
 function render(){
   const step=steps[cur];
-  layout();
-  renderPlayers(step);
-  renderLines(step);
-  renderVotes(step);
+  layout();renderSeats(step);renderLines(step);renderVotes(step);renderAgents(step);
   const round=step.r!==undefined?G.rounds[step.r]:null;
-  $("#rdlabel").textContent = round?`Round ${round.index+1}`:(step.type==="result"?"Final":"Setup");
-  $("#phaselabel").textContent = PHASE[step.type]||"";
-  const pct = steps.length>1 ? 100*cur/(steps.length-1) : 0;
-  $("#prog").style.width = pct+"%";
+  $("#rdlabel").textContent=round?`Round ${round.index+1}`:(step.type==="result"?"Final":"Setup");
+  $("#phaselabel").textContent=PHASE[step.type]||"";
+  $("#ah-phase").textContent=round?`Round ${round.index+1} · ${PHASE[step.type]}`:PHASE[step.type];
+  const pct=steps.length>1?100*cur/(steps.length-1):0;
+  $("#prog").style.width=pct+"%";
 
-  // event log
-  const log=$("#log"); log.innerHTML="";
-  const shown = steps.slice(0,cur+1).filter(s=>s.type!=="intro");
-  shown.forEach(s=>{
-    const r=s.r!==undefined?G.rounds[s.r]:null;
-    let html="";
-    if(s.type==="clues"&&r) html=`<b>R${r.index+1}</b> clues spoken`;
-    else if(s.type==="suspicion"&&r) html=`<b>R${r.index+1}</b> beliefs updated`;
+  const log=$("#log");log.innerHTML="";
+  steps.slice(0,cur+1).filter(s=>s.type!=="intro").forEach(s=>{
+    const r=s.r!==undefined?G.rounds[s.r]:null;let html="";
+    if(s.type==="clues"&&r)html=`<b>R${r.index+1}</b> ${r.clues.length} Jev agents gave clues`;
+    else if(s.type==="suspicion"&&r)html=`<b>R${r.index+1}</b> each Jev formed a belief`;
     else if(s.type==="votes"&&r){const t=Object.entries(r.tally).sort((a,b)=>b[1]-a[1]).map(([p,n])=>`${p}×${n}`).join(", ");html=`<b>R${r.index+1}</b> votes: ${t}`;}
-    else if(s.type==="eliminated"&&r&&r.eliminated){const spy=r.eliminated===G.undercover_id;html=`<b>${r.eliminated}</b> eliminated — ${spy?'<span style="color:var(--good)">was the undercover ✓</span>':'<span style="color:var(--spy)">civilian ✗</span>'}`;}
-    else if(s.type==="result") html=`<b>${G.winner==="civilian"?"Civilians":"Undercover"} win</b>`;
+    else if(s.type==="eliminated"&&r&&r.eliminated){const spy=r.eliminated===G.undercover_id;html=`<b>${r.eliminated}</b> voted out — ${spy?'<span style="color:var(--good)">was the undercover ✓</span>':'<span style="color:var(--spy)">civilian ✗</span>'}`;}
+    else if(s.type==="result")html=`<b>${G.winner==="civilian"?"Civilians":"Undercover"} win</b>`;
     if(html){const d=document.createElement("div");d.className="ev";d.innerHTML=html;log.appendChild(d);}
   });
   log.scrollTop=log.scrollHeight;
 
   const win=$("#winner");
-  if(step.type==="result"){
-    win.classList.add("show");
-    const civ=G.winner==="civilian";
-    $("#winbig").textContent=civ?"CIVILIANS WIN":"UNDERCOVER WINS";
-    $("#winbig").style.color=civ?"var(--good)":"var(--spy)";
-    $("#winsmall").textContent=`${G.rounds_played} round(s) · undercover was ${G.undercover_id} (${wordOf(G.undercover_id)})`;
-  } else win.classList.remove("show");
-
-  $("#prev").disabled=cur===0; $("#next").disabled=cur===steps.length-1;
+  if(step.type==="result"){win.classList.add("show");const civ=G.winner==="civilian";$("#winbig").textContent=civ?"CIVILIANS WIN":"UNDERCOVER WINS";$("#winbig").style.color=civ?"var(--good)":"var(--spy)";$("#winsmall").textContent=`${G.rounds_played} round(s) · undercover was ${G.undercover_id} (${wordOf(G.undercover_id)})`;}
+  else win.classList.remove("show");
+  $("#prev").disabled=cur===0;$("#next").disabled=cur===steps.length-1;
 }
-function wordOf(id){const p=G.players.find(p=>p.id===id);return p?p.secret:"?";}
-
 function go(i){cur=Math.max(0,Math.min(steps.length-1,i));render();}
-function play(){
-  if(cur>=steps.length-1) cur=0;
-  playing=true; $("#play").textContent="❚❚ Pause";
-  clearInterval(timer);
-  timer=setInterval(()=>{
-    if(cur>=steps.length-1){stop();return;}
-    go(cur+1);
-  }, parseInt($("#speed").value));
-  render();
-}
+function play(){if(cur>=steps.length-1)cur=0;playing=true;$("#play").textContent="❚❚ Pause";clearInterval(timer);timer=setInterval(()=>{if(cur>=steps.length-1){stop();return;}go(cur+1);},parseInt($("#speed").value));render();}
 function stop(){playing=false;$("#play").textContent="▶ Play";clearInterval(timer);}
-
 function loadGame(idx){
-  stop(); G=GAMES[idx]; steps=buildSteps(G); cur=0;
-  $("#m-players").textContent=G.players.length;
-  $("#m-backend").textContent=G.backend||"offline";
+  stop();G=GAMES[idx];steps=buildSteps(G);cur=0;
+  $("#m-players").textContent=G.players.length;$("#m-backend").textContent=G.backend||"offline";
   $("#m-spy").textContent=`${G.undercover_id} (${wordOf(G.undercover_id)})`;
-  const civ=G.winner==="civilian";
-  $("#m-winner").innerHTML=`<span class="pill ${civ?'civ':'spy'}">${civ?'Civilians':'Undercover'}</span>`;
+  const civ=G.winner==="civilian";$("#m-winner").innerHTML=`<span class="pill ${civ?'civ':'spy'}">${civ?'Civilians':'Undercover'}</span>`;
   render();
 }
-
-// init
 (function(){
   const sel=$("#gamesel");
   GAMES.forEach((g,i)=>{const o=document.createElement("option");o.value=i;o.textContent=`#${i+1} · ${g.players.length}p · ${g.winner==="civilian"?"civ":"spy"} win`;sel.appendChild(o);});
@@ -373,10 +334,9 @@ function loadGame(idx){
   $("#next").onclick=()=>{stop();go(cur+1);};
   $("#prev").onclick=()=>{stop();go(cur-1);};
   $("#speed").onchange=()=>{if(playing)play();};
-  window.addEventListener("resize",()=>render());
+  window.addEventListener("resize",render);
   document.addEventListener("keydown",e=>{if(e.key===" "){e.preventDefault();playing?stop():play();}if(e.key==="ArrowRight"){stop();go(cur+1);}if(e.key==="ArrowLeft"){stop();go(cur-1);}});
-  if(GAMES.length) loadGame(0);
-  else document.querySelector(".stage").innerHTML="<p style='padding:40px'>No game data baked in.</p>";
+  if(GAMES.length)loadGame(0);else $(".stage").innerHTML="<p style='padding:40px'>No game data baked in.</p>";
 })();
 </script>
 </body>

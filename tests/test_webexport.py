@@ -18,6 +18,9 @@ def test_game_to_dict_shape():
     for b in r0["beliefs"]:
         assert abs(sum(b["distribution"].values()) - 1.0) < 1e-6
         assert b["top"] in b["distribution"] or not b["distribution"]
+        assert "own_clue" in b
+        assert b["rationale"]["strength"] in ("strong", "moderate", "weak", "none")
+        assert b["rationale"]["text"]
 
 
 def test_render_html_injects_valid_json():
