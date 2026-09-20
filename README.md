@@ -34,6 +34,14 @@ Everything runs **offline with no API key** via a deterministic stand-in backend
 the demo, experiments, and CI work out of the box. Set `TYPESAFE_API_KEY` to swap in
 real Jev judgements.
 
+**Watch it play** in a browser God's-eye view (players seated around the table,
+speech-bubble clues, animated per-agent suspicion bars, vote arrows, elimination,
+winner banner) — generated as one self-contained, shareable HTML file:
+
+```bash
+jev-undercover --web undercover-viewer.html --games 6 && open undercover-viewer.html
+```
+
 ## Install
 
 ```bash
@@ -44,7 +52,11 @@ pip install -e ".[dev]"          # add ",plots" for trajectory PNGs, ",live" for
 ## Quickstart
 
 ```bash
-# God's-eye view: WATCH one game play out round-by-round (clues, suspicion, votes)
+# WEB God's-eye view: bake games into a self-contained HTML you can open/share
+jev-undercover --web undercover-viewer.html --games 6 --players 5
+open undercover-viewer.html          # macOS (or just double-click the file)
+
+# Terminal God's-eye view: WATCH one game play out (clues, suspicion, votes)
 jev-undercover --watch --players 5 --seed 3
 
 # 20 offline games of 5-player Undercover, with calibration report

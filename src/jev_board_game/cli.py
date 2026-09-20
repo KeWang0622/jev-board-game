@@ -47,6 +47,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="God's-eye view: replay ONE game round-by-round with all hidden info",
     )
+    p.add_argument(
+        "--web",
+        metavar="PATH",
+        help="write a self-contained God's-eye web viewer (HTML) with games baked in",
+    )
     return p
 
 
@@ -67,6 +72,29 @@ def main(argv: list[str] | None = None) -> int:
         )
         print(f"backend: {backend.name}\n")
         print(narrate(game.play()))
+        return 0
+
+    if args.web:
+        from .games.undercover import Undercover
+        from .webexport import export_html, game_to_dict
+
+        n_games = max(1, args.games)
+        games = [
+            game_to_dict(
+                Undercover(
+                    backend=backend,
+                    n_players=args.players[0],
+                    max_reveal=args.max_reveal[0],
+                    seed=args.seed + i,
+                ).play(),
+                backend=backend.name,
+            )
+            for i in range(n_games)
+        ]
+        export_html(games, args.web)
+        print(f"backend: {backend.name}")
+        print(f"baked {n_games} game(s) -> {args.web}")
+        print(f"open it in a browser:  open {args.web}")
         return 0
 
     results = sweep(

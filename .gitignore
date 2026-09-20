@@ -24,6 +24,8 @@ htmlcov/
 runs/
 *.png
 !docs/*.png
+# Generated web viewers (the template src/jev_board_game/web/viewer.html is tracked)
+/*-viewer.html
 
 # OS / editor
 .DS_Store
