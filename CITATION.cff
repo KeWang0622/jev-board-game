@@ -1,0 +1,35 @@
+cff-version: 1.2.0
+message: "If you use this software or its findings, please cite it as below."
+title: "Jev Board Game: belief as a primitive for social-deduction games"
+abstract: >-
+  A research testbed and analysis harness that instruments social-deduction games
+  (Undercover, with Werewolf and Avalon planned) with a calibrated System-One model
+  (Jev, by TypeSafe). Each agent's suspicion is obtained as a typed, natively
+  calibrated probability distribution rather than probed from an autoregressive
+  language model's verbalized confidence. Every Jev judgement is logged per round
+  and scored for calibration (expected calibration error, Brier score) and
+  belief-trajectory dynamics against known ground truth, and can be replayed in a
+  terminal or self-contained web "God's-eye" viewer.
+type: software
+authors:
+  - family-names: Wang
+    given-names: Ke
+version: 0.1.0
+date-released: "2026-09-20"
+license: MIT
+repository-code: "https://github.com/KeWang0622/jev-board-game"
+url: "https://github.com/KeWang0622/jev-board-game"
+keywords:
+  - Jev
+  - TypeSafe
+  - System One
+  - social deduction
+  - Undercover
+  - Werewolf
+  - Avalon
+  - calibration
+  - expected calibration error
+  - Brier score
+  - belief modeling
+  - LLM agents
+  - multi-agent

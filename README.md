@@ -1,26 +1,41 @@
-# Jev Board Game
+<h1 align="center">Jev Board Game</h1>
 
-**Belief as a primitive: instrumenting social-deduction games with a calibrated System-One model.**
+<p align="center">
+  <strong>Belief as a primitive — instrumenting social-deduction games with a calibrated System-One model.</strong><br>
+  Every player is an independent <a href="https://typesafe.ai"><b>Jev</b></a> agent; its suspicion is a typed, natively-calibrated probability distribution you can log, score, and watch.
+</p>
 
-Social-deduction games (Undercover, Werewolf, Avalon) are, at their core, games of
-*calibrated belief under hidden information*: each player maintains a probability
-over who is lying and updates it every turn. A recent wave of work tries to recover
-those beliefs from autoregressive LLMs by *probing* them or asking them to *verbalize*
-confidence — and repeatedly finds that verbalized confidence is **poorly calibrated**
-and must be recalibrated before it can be read as probability (see [Related work](docs/related_work.md)).
+<p align="center">
+  <a href="https://github.com/KeWang0622/jev-board-game/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/KeWang0622/jev-board-game/ci.yml?branch=main&style=for-the-badge&labelColor=000000&label=CI"></a>
+  <a href="https://github.com/KeWang0622/jev-board-game/blob/main/LICENSE"><img alt="License: MIT" src="https://img.shields.io/github/license/KeWang0622/jev-board-game?style=for-the-badge&labelColor=000000"></a>
+  <img alt="Python 3.10–3.13" src="https://img.shields.io/badge/python-3.10--3.13-1f6feb?style=for-the-badge&labelColor=000000">
+  <img alt="Type-checked: mypy" src="https://img.shields.io/badge/type--checked-mypy-2a6db0?style=for-the-badge&labelColor=000000">
+  <img alt="Lint: ruff" src="https://img.shields.io/badge/lint-ruff-8b7dff?style=for-the-badge&labelColor=000000">
+</p>
 
-This repo takes the opposite route. [Jev](https://typesafe.ai) (TypeSafe's *System One*
-model) does not generate text; it returns a **typed, natively-calibrated probability
-distribution** as its primitive output. So instead of probing a language model for a
-belief and then correcting it, we make the belief the model's direct answer:
-
-> Every agent's suspicion is a Jev `Choice` over the other players. **That probability
-> distribution _is_ the belief** — logged every round, and scored against known ground
-> truth for calibration (ECE, Brier) and belief-trajectory analysis.
-
-`Jev Board Game` is the testbed and analysis harness for that idea.
+<p align="center"><img src="docs/hero.png" alt="God's-eye web viewer: players around a table with suspicion arrows, a per-agent readout (clue, accusation, reason, belief bars), and a full Jev decision log." width="900"></p>
 
 ---
+
+## Why this exists
+
+Social-deduction games (Undercover, Werewolf, Avalon) are, at their core, games of
+**calibrated belief under hidden information**: each player keeps a probability over
+who is lying and updates it every turn. A recent wave of work tries to recover those
+beliefs from autoregressive LLMs by *probing* them or asking them to *verbalize*
+confidence — and repeatedly finds that verbalized confidence is **poorly calibrated**
+and must be recalibrated before it can be read as probability (see [related work](docs/related_work.md)).
+
+This project takes the opposite route. [Jev](https://typesafe.ai) (TypeSafe's *System
+One* model) does not generate text; it returns a **typed, natively-calibrated
+probability distribution** as its primitive output. So instead of probing a language
+model for a belief and correcting it, the belief *is* the model's direct answer:
+
+> Each agent's suspicion is a Jev `Choice` over the other players. **That distribution
+> is the belief** — logged every round and scored against ground truth for calibration
+> (ECE, Brier) and belief-trajectory analysis.
+
+`Jev Board Game` is the testbed and analysis harness for that idea.
 
 ## Status
 
@@ -34,14 +49,6 @@ Everything runs **offline with no API key** via a deterministic stand-in backend
 the demo, experiments, and CI work out of the box. Set `TYPESAFE_API_KEY` to swap in
 real Jev judgements.
 
-**Watch it play** in a browser God's-eye view (players seated around the table,
-speech-bubble clues, animated per-agent suspicion bars, vote arrows, elimination,
-winner banner) — generated as one self-contained, shareable HTML file:
-
-```bash
-jev-undercover --web undercover-viewer.html --games 6 && open undercover-viewer.html
-```
-
 ## Install
 
 ```bash
@@ -52,36 +59,37 @@ pip install -e ".[dev]"          # add ",plots" for trajectory PNGs, ",live" for
 ## Quickstart
 
 ```bash
-# WEB God's-eye view: bake games into a self-contained HTML you can open/share
-jev-undercover --web undercover-viewer.html --games 6 --players 5
-open undercover-viewer.html          # macOS (or just double-click the file)
+# WEB God's-eye view: bake games into a self-contained, shareable HTML file
+jev-undercover --web undercover-viewer.html --games 6 && open undercover-viewer.html
 
-# Terminal God's-eye view: WATCH one game play out (clues, suspicion, votes)
+# TERMINAL God's-eye view: watch one game play out (clues, suspicion, votes)
 jev-undercover --watch --players 5 --seed 3
 
-# 20 offline games of 5-player Undercover, with calibration report
+# 20 offline games with a calibration report
 jev-undercover --games 20 --players 5
 
-# sweep player count x clue-revealingness (the "how much do clues expose" knob)
+# sweep player count × clue-revealingness (the "how much do clues expose" knob)
 jev-undercover --games 20 --players 4,5,6 --max-reveal 0,1,2
 
-# use real Jev (requires TYPESAFE_API_KEY); dump machine-readable results
+# real Jev (needs TYPESAFE_API_KEY); dump machine-readable results
 jev-undercover --backend live --games 50 --players 5 --json runs/live.json
 ```
 
-Example output (offline backend):
+The web viewer shows the table with speech-bubble clues and suspicion/vote arrows, a
+per-agent readout (**what each Jev said, who it accuses, its reason, and its belief
+bars**), and a full **Jev decision log** of every judgement. It's a single static HTML
+file — open it locally or host it anywhere; `?game=<i>&step=<n>` deep-links a moment.
 
-```
-backend: offline
+> **On the offline backend.** It does not understand language; it produces stable,
+> well-formed distributions from lexical heuristics (including a generic odd-one-out
+> signal) so the pipeline and demo are non-trivial and reproducible. Its calibration
+> numbers illustrate the *analysis*, not Jev's real accuracy — for the scientific
+> result, run `--backend live`.
 
-[players=5,max_reveal=2] games=20 civ_win_rate=... mean_rounds=... | records=... top1_acc=... mass_on_truth=... brier=... ECE=...
-```
-
-> **Note on the offline backend.** It does not understand language; it produces
-> stable, well-formed distributions from lexical heuristics (including a generic
-> odd-one-out signal) so the pipeline and demo are non-trivial and reproducible. Its
-> calibration numbers illustrate the *analysis*, not Jev's real accuracy — for the
-> scientific result, run `--backend live`.
+> **On the "reasons."** Jev returns probabilities, not prose. Each reason shown in the
+> viewer is derived *faithfully* from the distribution and the clues (the accusation,
+> its strength vs. a uniform guess, and the driving clue) — never a generated
+> explanation.
 
 ## How it maps onto Jev primitives
 
@@ -102,28 +110,35 @@ Two invariants keep the science honest:
 ```
 src/jev_board_game/
   jev/          backend-agnostic client: typed Choice/Noul/Score + live & offline backends
-  engine/       game contract, players/events, BeliefRecord (the research payload)
+  engine/       game contract, players/events, BeliefRecord + JevDecision (the research payload)
   games/        undercover.py (full); werewolf.py, avalon.py (scaffolds)
   agents/       jev_agent.py — clue selection + suspicion via Jev
   analysis/     calibration.py (ECE, Brier, reliability), trajectories.py
   experiment.py run many games / sweep configs and aggregate
+  replay.py     terminal God's-eye view
+  webexport.py  bake games into the self-contained web viewer
+  web/          viewer.html
   cli.py        `jev-undercover`
 ```
 
 ## Development
 
 ```bash
-pytest            # test suite (offline, deterministic)
-ruff check .      # lint
-mypy              # type-check
+ruff check .        # lint
+mypy                # type-check (strict)
+pytest              # tests (offline, deterministic)
+pre-commit install  # optional: run the gates on every commit
 ```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the design philosophy and PR checklist.
 
 ## The paper
 
-The intended contribution and framing live in [`docs/related_work.md`](docs/related_work.md).
-Short version: prior social-deduction-agent work measures win rates or probes
-autoregressive LLMs for miscalibrated beliefs; here the belief is a calibrated
-primitive by construction, and the game is the instrument that tests it.
+The intended contribution and framing live in [`docs/related_work.md`](docs/related_work.md):
+prior social-deduction-agent work measures win rates or probes autoregressive LLMs for
+miscalibrated beliefs; here the belief is a calibrated primitive by construction, and
+the game is the instrument that tests it. If you build on this, please cite it —
+see [`CITATION.cff`](CITATION.cff).
 
 ## License
 

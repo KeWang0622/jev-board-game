@@ -219,7 +219,7 @@ let G=null, steps=[], cur=0, playing=false, timer=null, positions={};
 
 function buildSteps(g){
   const s=[{type:"intro"}];
-  g.rounds.forEach(r=>s.push({type:"clues",r},{type:"suspicion",r},{type:"votes",r},{type:"eliminated",r}));
+  g.rounds.forEach((r,i)=>s.push({type:"clues",r:i},{type:"suspicion",r:i},{type:"votes",r:i},{type:"eliminated",r:i}));
   s.push({type:"result"});
   return s;
 }
@@ -412,7 +412,12 @@ function loadGame(idx){
   $("#speed").onchange=()=>{if(playing)play();};
   window.addEventListener("resize",render);
   document.addEventListener("keydown",e=>{if(e.key===" "){e.preventDefault();playing?stop():play();}if(e.key==="ArrowRight"){stop();go(cur+1);}if(e.key==="ArrowLeft"){stop();go(cur-1);}});
-  if(GAMES.length)loadGame(0);else $(".stage").innerHTML="<p style='padding:40px'>No game data baked in.</p>";
+  const params=new URLSearchParams(location.search);
+  if(GAMES.length){
+    const gi=Math.max(0,Math.min(GAMES.length-1,parseInt(params.get("game")||"0")||0));
+    sel.value=gi; loadGame(gi);
+    const st=params.get("step"); if(st!==null) go(parseInt(st)||0);
+  } else $(".stage").innerHTML="<p style='padding:40px'>No game data baked in.</p>";
 })();
 </script>
 </body>
