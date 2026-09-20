@@ -18,7 +18,7 @@ from dataclasses import dataclass
 
 from ..engine.events import Clue, Player
 from ..jev.client import JevBackend
-from ..jev.types import Choice
+from ..jev.types import Choice, ChoiceAnswer
 
 
 @dataclass
@@ -36,10 +36,20 @@ class UndercoverAgent:
     def id(self) -> str:
         return self.player.id
 
+    CLUE_QUESTION = (
+        "Which clue should you say next to blend in without revealing that "
+        "your word might differ from the others?"
+    )
+    SUSPECT_QUESTION = "Which other player most likely has the odd word (the spy)?"
+
     def choose_clue(
         self, candidate_clues: list[str], transcript: list[Clue], round_index: int
-    ) -> str:
-        """Pick a clue that describes my word while blending with what was said."""
+    ) -> ChoiceAnswer:
+        """Pick a clue that describes my word while blending with what was said.
+
+        Returns the full Jev decision (chosen clue + distribution over all
+        candidate clues + confidence), so callers can log every judgement.
+        """
 
         state = {
             "your_secret_word": self.player.secret or "",
@@ -53,14 +63,10 @@ class UndercoverAgent:
             ),
         }
         question = Choice(
-            instructions=(
-                "Which clue should you say next to blend in without revealing that "
-                "your word might differ from the others?"
-            ),
+            instructions=self.CLUE_QUESTION,
             criteria={clue: None for clue in candidate_clues},
         )
-        answer = self.backend.ask(state, {"clue": question}).choice("clue")
-        return answer.choice
+        return self.backend.ask(state, {"clue": question}).choice("clue")
 
     def assess(
         self,
@@ -83,7 +89,7 @@ class UndercoverAgent:
             ),
         }
         question = Choice(
-            instructions="Which other player most likely has the odd word (the spy)?",
+            instructions=self.SUSPECT_QUESTION,
             criteria={
                 pid: "clues given: " + " | ".join(clues) if clues else "no clues yet"
                 for pid, clues in candidates.items()

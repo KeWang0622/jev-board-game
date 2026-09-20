@@ -84,6 +84,18 @@ def game_to_dict(result: GameResult, backend: str = "offline") -> dict[str, Any]
         ]
         tally = Counter(v["target"] for v in votes)
         eliminated = result.eliminated_order[r] if r < len(result.eliminated_order) else None
+        decisions = [
+            {
+                "agent": d.agent_id,
+                "kind": d.kind,
+                "question": d.question,
+                "options": d.options,
+                "choice": d.choice,
+                "confidence": d.confidence,
+            }
+            for d in result.decisions
+            if d.round_index == r
+        ]
         rounds.append(
             {
                 "index": r,
@@ -92,6 +104,7 @@ def game_to_dict(result: GameResult, backend: str = "offline") -> dict[str, Any]
                 "votes": votes,
                 "tally": dict(tally),
                 "eliminated": eliminated,
+                "decisions": decisions,
             }
         )
 
@@ -99,6 +112,7 @@ def game_to_dict(result: GameResult, backend: str = "offline") -> dict[str, Any]
         "backend": backend,
         "winner": result.winner.value,
         "rounds_played": result.rounds_played,
+        "n_decisions": len(result.decisions),
         "undercover_id": result.undercover_id,
         "players": [
             {"id": p.id, "team": p.team.value, "secret": p.secret} for p in result.players

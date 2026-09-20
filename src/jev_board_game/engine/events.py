@@ -53,6 +53,24 @@ class BeliefRecord:
         return self.distribution.get(self.ground_truth_id, 0.0)
 
 
+@dataclass(frozen=True)
+class JevDecision:
+    """One judgement Jev returned, with its full typed output.
+
+    ``kind`` is the decision type (e.g. "clue", "suspect"); ``options`` is the
+    probability distribution Jev returned over the choices; ``choice`` is the
+    selected option; ``confidence`` is the distribution's peakedness.
+    """
+
+    round_index: int
+    agent_id: str
+    kind: str
+    question: str
+    options: dict[str, float]
+    choice: str
+    confidence: float
+
+
 @dataclass
 class GameResult:
     winner: Team
@@ -63,3 +81,4 @@ class GameResult:
     votes: list[Vote] = field(default_factory=list)
     players: list[Player] = field(default_factory=list)
     undercover_id: str = ""
+    decisions: list[JevDecision] = field(default_factory=list)

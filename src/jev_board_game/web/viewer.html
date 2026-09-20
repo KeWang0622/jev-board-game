@@ -103,6 +103,32 @@
   .agent .conf{font-size:11px;color:var(--dim);margin-top:8px}
   .agent .conf .tagc{font-weight:700}
   .agent .conf .strong{color:var(--good)} .agent .conf .moderate{color:var(--warn)} .agent .conf .weak{color:var(--spy)}
+  /* Decision log */
+  .declog{display:flex;flex-direction:column;gap:10px}
+  .dround{border:1px solid var(--stroke);border-radius:14px;background:var(--panel);overflow:hidden}
+  .dround.here{border-color:var(--accent);box-shadow:0 6px 24px rgba(139,125,255,.15)}
+  .dround .dhead{display:flex;align-items:center;gap:8px;padding:9px 14px;background:rgba(255,255,255,.04);font-weight:700;font-size:13px}
+  .dround .dhead .rtag{color:var(--dim);font-weight:600;font-size:12px}
+  .drow{display:grid;grid-template-columns:74px 42px 1fr 150px;gap:10px;align-items:center;padding:8px 14px;border-top:1px dashed rgba(255,255,255,.07);font-size:12.5px}
+  @media(max-width:720px){.drow{grid-template-columns:70px 40px 1fr;}.drow .ddist{grid-column:1/-1}}
+  .kind{font-size:10px;font-weight:800;letter-spacing:.5px;text-align:center;border-radius:7px;padding:3px 6px}
+  .kind.clue{background:rgba(78,163,255,.2);color:var(--civ)}
+  .kind.suspect{background:rgba(255,93,115,.18);color:var(--spy)}
+  .dagent{font-weight:700}
+  .dagent.spy{color:var(--spy)}
+  .dchoice{color:var(--txt)}
+  .dchoice .arrow{color:var(--dim);margin:0 6px}
+  .dchoice .pick{font-weight:700}
+  .dchoice .pick.hit{color:var(--good)}
+  .dchoice .over{color:var(--dim);font-size:11.5px;margin-top:2px}
+  .ddist{display:flex;flex-direction:column;gap:2px}
+  .ddist .r{display:flex;align-items:center;gap:5px;font-size:10.5px}
+  .ddist .r .k{flex:1;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ddist .r .t{width:44px;height:6px;border-radius:5px;background:rgba(255,255,255,.08);overflow:hidden;flex:0 0 auto}
+  .ddist .r .t>i{display:block;height:100%;background:linear-gradient(90deg,var(--civ),var(--accent))}
+  .ddist .r .t>i.hit{background:linear-gradient(90deg,var(--good),#7effc0)}
+  .ddist .r .p{width:30px;text-align:right;color:var(--dim)}
+  .conf-chip{color:var(--dim);font-size:11px;white-space:nowrap}
   .footnote{color:var(--dim);font-size:11.5px;margin:16px 2px 4px;line-height:1.5}
   .legend{font-size:12px;color:var(--dim);display:flex;gap:14px;flex-wrap:wrap}
   .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:middle}
@@ -146,6 +172,7 @@
         <h3>Match</h3>
         <div class="kv"><span>Players (Jev agents)</span><b id="m-players">—</b></div>
         <div class="kv"><span>Jev backend</span><b id="m-backend">—</b></div>
+        <div class="kv"><span>Jev decisions</span><b id="m-decisions">—</b></div>
         <div class="kv"><span>Undercover</span><b id="m-spy" class="pill spy">—</b></div>
         <div class="kv"><span>Winner</span><b id="m-winner">—</b></div>
       </div>
@@ -170,6 +197,12 @@
     <span class="note" id="ah-note">what each Jev said, who it accuses, and why</span>
   </div>
   <div class="agents" id="agents"></div>
+
+  <div class="agents-head">
+    <h2>Jev decision log</h2>
+    <span class="note" id="dl-note">every judgement Jev returned this game — clue choices and suspicions</span>
+  </div>
+  <div class="declog" id="decisions"></div>
 
   <div class="footnote">
     🧠 <b>About the reasons.</b> Jev returns a <b>typed, calibrated probability distribution</b>, not prose.
@@ -288,10 +321,52 @@ function renderAgents(step){
   });
 }
 
+function trunc(s,n){s=s||"";return s.length>n?s.slice(0,n-1)+"…":s;}
+function distRows(options,limit){
+  return Object.entries(options).sort((a,b)=>b[1]-a[1]).slice(0,limit).map(([k,pr])=>{
+    const hit=k===G.undercover_id;
+    return `<div class="r"><span class="k">${trunc(k,26)}</span><span class="t"><i class="${hit?'hit':''}" style="width:${Math.round(pr*100)}%"></i></span><span class="p">${Math.round(pr*100)}%</span></div>`;
+  }).join("");
+}
+function renderDecisions(step){
+  const el=$("#decisions"); el.innerHTML="";
+  const here = step.r!==undefined ? step.r : -1;
+  G.rounds.forEach(r=>{
+    const decs=r.decisions||[];
+    if(!decs.length) return;
+    const block=document.createElement("div");
+    block.className="dround"+(r.index===here?" here":"");
+    let rows="";
+    decs.forEach(d=>{
+      const spy = d.agent===G.undercover_id;
+      const isSuspect = d.kind==="suspect";
+      const hit = isSuspect && d.choice===G.undercover_id;
+      let choiceHtml;
+      if(isSuspect){
+        choiceHtml=`<span class="dchoice"><span class="arrow">accuses →</span><span class="pick ${hit?'hit':''}">${d.choice}</span></span>`;
+      }else{
+        const alts=Object.entries(d.options).sort((a,b)=>b[1]-a[1]).filter(([k])=>k!==d.choice).slice(0,2)
+          .map(([k,p])=>`“${trunc(k,22)}” ${Math.round(p*100)}%`).join(" · ");
+        choiceHtml=`<span class="dchoice"><span class="pick">“${trunc(d.choice,40)}”</span>`+
+          (alts?`<div class="over">picked over: ${alts}</div>`:"")+`</span>`;
+      }
+      rows+=`<div class="drow">
+        <span class="kind ${d.kind}">${d.kind.toUpperCase()}</span>
+        <span class="dagent ${spy?'spy':''}">${d.agent}</span>
+        ${choiceHtml}
+        <span class="ddist">${distRows(d.options, isSuspect?3:3)}<span class="conf-chip">conf ${Math.round((d.confidence||0)*100)}%</span></span>
+      </div>`;
+    });
+    const nClue=decs.filter(d=>d.kind==="clue").length, nSus=decs.filter(d=>d.kind==="suspect").length;
+    block.innerHTML=`<div class="dhead">Round ${r.index+1}<span class="rtag">· ${nClue} clue + ${nSus} suspicion decisions</span></div>${rows}`;
+    el.appendChild(block);
+  });
+}
+
 const PHASE={intro:"Words dealt",clues:"Clues",suspicion:"Suspicion",votes:"Voting",eliminated:"Elimination",result:"Result"};
 function render(){
   const step=steps[cur];
-  layout();renderSeats(step);renderLines(step);renderVotes(step);renderAgents(step);
+  layout();renderSeats(step);renderLines(step);renderVotes(step);renderAgents(step);renderDecisions(step);
   const round=step.r!==undefined?G.rounds[step.r]:null;
   $("#rdlabel").textContent=round?`Round ${round.index+1}`:(step.type==="result"?"Final":"Setup");
   $("#phaselabel").textContent=PHASE[step.type]||"";
@@ -322,6 +397,7 @@ function stop(){playing=false;$("#play").textContent="▶ Play";clearInterval(ti
 function loadGame(idx){
   stop();G=GAMES[idx];steps=buildSteps(G);cur=0;
   $("#m-players").textContent=G.players.length;$("#m-backend").textContent=G.backend||"offline";
+  $("#m-decisions").textContent=G.n_decisions!=null?G.n_decisions:"—";
   $("#m-spy").textContent=`${G.undercover_id} (${wordOf(G.undercover_id)})`;
   const civ=G.winner==="civilian";$("#m-winner").innerHTML=`<span class="pill ${civ?'civ':'spy'}">${civ?'Civilians':'Undercover'}</span>`;
   render();

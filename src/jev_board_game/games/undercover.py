@@ -22,7 +22,15 @@ from importlib import resources
 from typing import Any
 
 from ..agents.jev_agent import UndercoverAgent
-from ..engine.events import BeliefRecord, Clue, GameResult, Player, Team, Vote
+from ..engine.events import (
+    BeliefRecord,
+    Clue,
+    GameResult,
+    JevDecision,
+    Player,
+    Team,
+    Vote,
+)
 from ..engine.game import SocialDeductionGame
 from ..jev.client import JevBackend
 
@@ -92,6 +100,7 @@ class Undercover(SocialDeductionGame):
         beliefs: list[BeliefRecord] = []
         all_votes: list[Vote] = []
         eliminated_order: list[str] = []
+        decisions: list[JevDecision] = []
 
         result = GameResult(winner=Team.UNDERCOVER, rounds_played=0)
         rounds_played = 0
@@ -108,7 +117,19 @@ class Undercover(SocialDeductionGame):
                 candidates = [
                     c for c in clue_banks[pid].clues if c not in used_clues[pid]
                 ] or list(clue_banks[pid].clues)
-                clue_text = agents[pid].choose_clue(candidates, transcript, round_index)
+                decision = agents[pid].choose_clue(candidates, transcript, round_index)
+                clue_text = decision.choice
+                decisions.append(
+                    JevDecision(
+                        round_index=round_index,
+                        agent_id=pid,
+                        kind="clue",
+                        question=UndercoverAgent.CLUE_QUESTION,
+                        options=dict(decision.probabilities),
+                        choice=clue_text,
+                        confidence=decision.confidence,
+                    )
+                )
                 used_clues[pid].add(clue_text)
                 spoken[pid].append(clue_text)
                 transcript.append(Clue(round_index, pid, clue_text))
@@ -123,6 +144,22 @@ class Undercover(SocialDeductionGame):
                         observer_id=observer,
                         distribution=assessment.distribution,
                         ground_truth_id=undercover_id,
+                        confidence=assessment.confidence,
+                    )
+                )
+                top = (
+                    max(assessment.distribution, key=lambda k: assessment.distribution[k])
+                    if assessment.distribution
+                    else ""
+                )
+                decisions.append(
+                    JevDecision(
+                        round_index=round_index,
+                        agent_id=observer,
+                        kind="suspect",
+                        question=UndercoverAgent.SUSPECT_QUESTION,
+                        options=dict(assessment.distribution),
+                        choice=top,
                         confidence=assessment.confidence,
                     )
                 )
@@ -156,6 +193,7 @@ class Undercover(SocialDeductionGame):
         result.votes = all_votes
         result.players = players
         result.undercover_id = undercover_id
+        result.decisions = decisions
         return result
 
     def _resolve_vote(

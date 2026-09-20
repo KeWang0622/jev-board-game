@@ -22,6 +22,17 @@ def test_game_runs_and_reports_beliefs():
         assert b.ground_truth_id not in b.distribution or b.observer_id != b.ground_truth_id
 
 
+def test_all_jev_decisions_are_recorded():
+    result = Undercover(OfflineJevBackend(), n_players=5, seed=1).play()
+    assert result.decisions, "every Jev judgement must be logged"
+    kinds = {d.kind for d in result.decisions}
+    assert kinds == {"clue", "suspect"}
+    for d in result.decisions:
+        assert d.choice in d.options
+        assert abs(sum(d.options.values()) - 1.0) < 1e-6
+        assert d.question
+
+
 def test_belief_never_includes_the_observer():
     game = Undercover(OfflineJevBackend(), n_players=6, seed=7)
     result = game.play()
