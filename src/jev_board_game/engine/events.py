@@ -7,8 +7,12 @@ from enum import Enum
 
 
 class Team(str, Enum):
+    # Undercover
     CIVILIAN = "civilian"
     UNDERCOVER = "undercover"
+    # Werewolf
+    TOWN = "town"
+    WEREWOLF = "werewolf"
 
 
 @dataclass(frozen=True)
@@ -17,6 +21,8 @@ class Player:
     team: Team
     # Hidden per-game payload (e.g. the secret word). Never shown to other agents.
     secret: str | None = None
+    # Concrete role within the team (e.g. "seer", "villager", "werewolf").
+    role: str = ""
 
 
 @dataclass(frozen=True)
@@ -48,9 +54,15 @@ class BeliefRecord:
     distribution: dict[str, float]
     ground_truth_id: str
     confidence: float
+    # Optional multi-member hidden team (e.g. several werewolves). When empty, the
+    # single ``ground_truth_id`` is the truth. Kept separate for back-compat.
+    ground_truth_ids: frozenset[str] = frozenset()
+
+    def truths(self) -> frozenset[str]:
+        return self.ground_truth_ids if self.ground_truth_ids else frozenset({self.ground_truth_id})
 
     def mass_on_truth(self) -> float:
-        return self.distribution.get(self.ground_truth_id, 0.0)
+        return sum(self.distribution.get(pid, 0.0) for pid in self.truths())
 
 
 @dataclass(frozen=True)
@@ -82,3 +94,12 @@ class GameResult:
     players: list[Player] = field(default_factory=list)
     undercover_id: str = ""
     decisions: list[JevDecision] = field(default_factory=list)
+    game_type: str = "undercover"
+    # Werewolf: id killed by wolves at night per round ("" if none/no night).
+    night_kills: list[str] = field(default_factory=list)
+
+    def hidden_team(self) -> list[str]:
+        """Ids of the hidden/adversary team (undercover holder(s) or werewolves)."""
+        if self.game_type == "werewolf":
+            return [p.id for p in self.players if p.team is Team.WEREWOLF]
+        return [self.undercover_id] if self.undercover_id else []

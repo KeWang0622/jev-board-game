@@ -48,6 +48,15 @@ def test_analyze_report_fields():
     assert "ECE" in report.summary()
 
 
+def test_multi_member_ground_truth_set():
+    # Werewolf-style: two hidden members; mass_on_truth sums over the set.
+    rec = BeliefRecord(0, "P1", {"P2": 0.4, "P3": 0.35, "P4": 0.25}, "", 0.3,
+                       ground_truth_ids=frozenset({"P2", "P3"}))
+    assert abs(rec.mass_on_truth() - 0.75) < 1e-9
+    report = analyze([rec])
+    assert report.top1_accuracy == 1.0  # top pick P2 is a wolf
+
+
 def test_empty_input_is_safe():
     report = analyze([])
     assert report.n_records == 0

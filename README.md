@@ -42,7 +42,7 @@ model for a belief and correcting it, the belief *is* the model's direct answer:
 | Game | State |
 | --- | --- |
 | **Undercover** (Who-Is-The-Spy) | ✅ fully implemented (reference game) |
-| Werewolf / Mafia | 🚧 scaffolded (shared engine + belief contract) |
+| **Werewolf** / Mafia | ✅ fully implemented (werewolves, seer, villagers; night kill + inspect + day vote) |
 | Avalon (The Resistance) | 🚧 scaffolded |
 
 Everything runs **offline with no API key** via a deterministic stand-in backend, so
@@ -71,9 +71,16 @@ jev-undercover --games 20 --players 5
 # sweep player count × clue-revealingness (the "how much do clues expose" knob)
 jev-undercover --games 20 --players 4,5,6 --max-reveal 0,1,2
 
+# WEREWOLF (--game werewolf works with --watch / --web / stats too)
+jev-undercover --game werewolf --watch --players 6 --seed 4
+jev-undercover --game werewolf --web werewolf-viewer.html --games 6 && open werewolf-viewer.html
+jev-undercover --game werewolf --games 40 --players 6 --werewolves 1
+
 # real Jev (needs TYPESAFE_API_KEY); dump machine-readable results
 jev-undercover --backend live --games 50 --players 5 --json runs/live.json
 ```
+
+<p align="center"><img src="docs/werewolf.png" alt="Werewolf God's-eye view: roles revealed, a night kill and seer inspection, day statements, and the town's suspicion converging on the werewolf." width="900"></p>
 
 The web viewer shows the table with speech-bubble clues and suspicion/vote arrows, a
 per-agent readout (**what each Jev said, who it accuses, its reason, and its belief

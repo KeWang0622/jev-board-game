@@ -23,6 +23,21 @@ def test_game_to_dict_shape():
         assert b["rationale"]["text"]
 
 
+def test_werewolf_game_to_dict_shape():
+    from jev_board_game.games.werewolf import Werewolf
+
+    result = Werewolf(OfflineJevBackend(), n_players=6, n_werewolves=1, seed=4).play()
+    d = game_to_dict(result, backend="offline")
+    assert d["game_type"] == "werewolf"
+    assert d["winner"] in ("town", "werewolf")
+    assert d["hidden_team"]  # the wolf pack
+    r0 = d["rounds"][0]
+    assert "night_victim" in r0
+    assert any(dec["kind"] == "seer_inspect" for dec in r0["decisions"])
+    for p in d["players"]:
+        assert p["role"] in ("werewolf", "seer", "villager")
+
+
 def test_render_html_injects_valid_json():
     games = [
         game_to_dict(Undercover(OfflineJevBackend(), n_players=5, seed=i).play())

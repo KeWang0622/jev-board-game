@@ -1,4 +1,10 @@
-"""Export games to a self-contained God's-eye web viewer (single HTML file)."""
+"""Export games to a self-contained God's-eye web viewer (single HTML file).
+
+Serializes both Undercover and Werewolf into one round-structured JSON the viewer
+renders. ``hidden_team`` lists the adversary ids (the undercover holder, or the
+werewolf pack); ``rationale`` on each belief is a faithful, template-generated
+explanation of a Jev distribution (never a generated one).
+"""
 
 from __future__ import annotations
 
@@ -15,15 +21,11 @@ _MARKER = "/*__GAMES__*/[]"
 def _rationale(
     distribution: dict[str, float],
     clues_by_speaker: dict[str, str],
+    hidden_team: set[str],
+    seer_known: dict[str, str],
     n_alive: int,
 ) -> dict[str, Any]:
-    """A faithful, template-generated explanation of a Jev belief.
-
-    Jev returns probabilities, not prose, so this is derived *only* from the
-    distribution and the clues — it never invents a reason the numbers don't
-    support. It reports the accusation, its strength relative to a uniform guess,
-    and (when the belief is decisive) the clue that drove it.
-    """
+    """Faithful, template-generated explanation of a Jev belief (no invented prose)."""
 
     if not distribution:
         return {"guess": "", "strength": "none", "text": "no one else to assess yet"}
@@ -40,82 +42,123 @@ def _rationale(
     else:
         strength = "weak"
 
-    if strength == "weak" or margin < 0.05:
-        text = "everyone sounds alike — unsure, slight lean to " + top
+    if top in seer_known:
+        text = (
+            "confirmed by your inspection to be a werewolf"
+            if seer_known[top] == "werewolf"
+            else "you cleared them, but they still top the read"
+        )
+    elif strength == "weak" or margin < 0.05:
+        text = "hard to read — unsure, slight lean to " + top
     else:
         clue = clues_by_speaker.get(top)
-        text = (
-            f'“{clue}” fits the group least' if clue else f"{top}'s clues stand out from the group"
-        )
+        text = f'“{clue}” stands out' if clue else f"{top} stands out from the group"
     return {"guess": top, "strength": strength, "text": text}
 
 
-def game_to_dict(result: GameResult, backend: str = "offline") -> dict[str, Any]:
-    rounds: list[dict[str, Any]] = []
-    n_rounds = max((c.round_index for c in result.transcript), default=-1) + 1
-    for r in range(n_rounds):
-        clues = [
-            {"speaker": c.speaker_id, "text": c.text}
-            for c in result.transcript
-            if c.round_index == r
-        ]
-        clues_by_speaker = {c["speaker"]: c["text"] for c in clues}
-        n_alive = len(clues)
-        beliefs = []
-        for b in result.beliefs:
-            if b.round_index != r:
-                continue
-            top = max(b.distribution, key=lambda k: b.distribution[k]) if b.distribution else ""
-            beliefs.append(
-                {
-                    "observer": b.observer_id,
-                    "own_clue": clues_by_speaker.get(b.observer_id, ""),
-                    "distribution": b.distribution,
-                    "confidence": b.confidence,
-                    "top": top,
-                    "top_prob": b.distribution.get(top, 0.0),
-                    "rationale": _rationale(b.distribution, clues_by_speaker, n_alive),
-                }
-            )
-        votes = [
-            {"voter": v.voter_id, "target": v.target_id}
-            for v in result.votes
-            if v.round_index == r
-        ]
-        tally = Counter(v["target"] for v in votes)
-        eliminated = result.eliminated_order[r] if r < len(result.eliminated_order) else None
-        decisions = [
+def _round_dict(result: GameResult, r: int, hidden_team: set[str]) -> dict[str, Any]:
+    clues = [
+        {"speaker": c.speaker_id, "text": c.text}
+        for c in result.transcript
+        if c.round_index == r
+    ]
+    clues_by_speaker = {c["speaker"]: c["text"] for c in clues}
+    n_alive = len(clues) if clues else len(result.players)
+
+    # Seer knowledge visible to the seer up to and including this round (werewolf).
+    seer_known: dict[str, str] = {}
+    for d in result.decisions:
+        if d.kind == "seer_inspect" and d.round_index <= r:
+            seer_known[d.choice] = "werewolf" if d.choice in hidden_team else "town"
+
+    beliefs = []
+    for b in result.beliefs:
+        if b.round_index != r:
+            continue
+        top = max(b.distribution, key=lambda k: b.distribution[k]) if b.distribution else ""
+        # Only the seer's own belief should surface inspection-based rationale.
+        known_for_observer = seer_known if _is_seer(result, b.observer_id) else {}
+        beliefs.append(
             {
-                "agent": d.agent_id,
-                "kind": d.kind,
-                "question": d.question,
-                "options": d.options,
-                "choice": d.choice,
-                "confidence": d.confidence,
-            }
-            for d in result.decisions
-            if d.round_index == r
-        ]
-        rounds.append(
-            {
-                "index": r,
-                "clues": clues,
-                "beliefs": beliefs,
-                "votes": votes,
-                "tally": dict(tally),
-                "eliminated": eliminated,
-                "decisions": decisions,
+                "observer": b.observer_id,
+                "own_clue": clues_by_speaker.get(b.observer_id, ""),
+                "distribution": b.distribution,
+                "confidence": b.confidence,
+                "top": top,
+                "top_prob": b.distribution.get(top, 0.0),
+                "rationale": _rationale(
+                    b.distribution, clues_by_speaker, hidden_team, known_for_observer, n_alive
+                ),
             }
         )
 
+    votes = [
+        {"voter": v.voter_id, "target": v.target_id}
+        for v in result.votes
+        if v.round_index == r
+    ]
+    tally = Counter(v["target"] for v in votes)
+    eliminated = result.eliminated_order[r] if r < len(result.eliminated_order) else None
+    decisions = [
+        {
+            "agent": d.agent_id,
+            "kind": d.kind,
+            "question": d.question,
+            "options": d.options,
+            "choice": d.choice,
+            "confidence": d.confidence,
+        }
+        for d in result.decisions
+        if d.round_index == r
+    ]
+
+    round_dict: dict[str, Any] = {
+        "index": r,
+        "clues": clues,
+        "beliefs": beliefs,
+        "votes": votes,
+        "tally": dict(tally),
+        "eliminated": eliminated,
+        "decisions": decisions,
+    }
+    if result.game_type == "werewolf":
+        round_dict["night_victim"] = (
+            result.night_kills[r] if r < len(result.night_kills) else ""
+        )
+        inspect = next(
+            (d for d in result.decisions if d.round_index == r and d.kind == "seer_inspect"),
+            None,
+        )
+        if inspect:
+            round_dict["seer_inspect"] = {
+                "seer": inspect.agent_id,
+                "target": inspect.choice,
+                "result": "werewolf" if inspect.choice in hidden_team else "town",
+            }
+    return round_dict
+
+
+def _is_seer(result: GameResult, pid: str) -> bool:
+    return any(p.id == pid and p.role == "seer" for p in result.players)
+
+
+def game_to_dict(result: GameResult, backend: str = "offline") -> dict[str, Any]:
+    hidden_team = set(result.hidden_team())
+    n_rounds = max((c.round_index for c in result.transcript), default=-1) + 1
+    n_rounds = max(n_rounds, len(result.night_kills))
+    rounds = [_round_dict(result, r, hidden_team) for r in range(n_rounds)]
+
     return {
+        "game_type": result.game_type,
         "backend": backend,
         "winner": result.winner.value,
         "rounds_played": result.rounds_played,
         "n_decisions": len(result.decisions),
         "undercover_id": result.undercover_id,
+        "hidden_team": sorted(hidden_team),
         "players": [
-            {"id": p.id, "team": p.team.value, "secret": p.secret} for p in result.players
+            {"id": p.id, "team": p.team.value, "role": p.role, "secret": p.secret}
+            for p in result.players
         ],
         "rounds": rounds,
     }

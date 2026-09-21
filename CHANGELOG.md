@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Werewolf** fully implemented: werewolves, a seer, and villagers over a
+  night/day cycle — night kill (combined across the wolf pack), seer inspection,
+  day statements, town suspicion, and voting, all via Jev `Choice`. Town suspicion
+  is scored against the whole wolf pack.
+- Engine generalized for multi-role games: `Player.role`, `Team.TOWN`/`WEREWOLF`,
+  and `BeliefRecord.ground_truth_ids` (a hidden team, not just one holder);
+  calibration/Brier/accuracy score against the set.
+- Web and terminal God's-eye viewers now render Werewolf (roles, night phase,
+  kills, seer inspections) as well as Undercover; the CLI takes `--game werewolf`
+  and `--werewolves N`.
+
 ## [0.1.0] — 2026-09-20
 
 Initial release.

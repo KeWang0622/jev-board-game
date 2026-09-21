@@ -41,6 +41,7 @@
   .seat{position:absolute;transform:translate(-50%,-50%);width:120px;text-align:center;transition:.35s}
   .seat .avatar{position:relative;width:52px;height:52px;border-radius:50%;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;background:linear-gradient(160deg,#2a3566,#1a2244);border:2px solid var(--stroke);box-shadow:0 8px 20px rgba(0,0,0,.35);transition:.35s}
   .seat.spy .avatar{border-color:var(--spy);box-shadow:0 0 0 3px rgba(255,93,115,.25),0 8px 20px rgba(0,0,0,.35)}
+  .seat.seer .avatar{border-color:var(--warn);box-shadow:0 0 0 3px rgba(255,200,87,.22),0 8px 20px rgba(0,0,0,.35)}
   .seat.speaking .avatar{border-color:var(--accent);box-shadow:0 0 0 4px rgba(139,125,255,.4)}
   .seat.dead{opacity:.32;filter:grayscale(.7)}
   .seat.dead .avatar::after{content:"✕";position:absolute;color:var(--spy);font-size:26px}
@@ -112,8 +113,10 @@
   .drow{display:grid;grid-template-columns:74px 42px 1fr 150px;gap:10px;align-items:center;padding:8px 14px;border-top:1px dashed rgba(255,255,255,.07);font-size:12.5px}
   @media(max-width:720px){.drow{grid-template-columns:70px 40px 1fr;}.drow .ddist{grid-column:1/-1}}
   .kind{font-size:10px;font-weight:800;letter-spacing:.5px;text-align:center;border-radius:7px;padding:3px 6px}
-  .kind.clue{background:rgba(78,163,255,.2);color:var(--civ)}
+  .kind.clue,.kind.statement{background:rgba(78,163,255,.2);color:var(--civ)}
   .kind.suspect{background:rgba(255,93,115,.18);color:var(--spy)}
+  .kind.night_kill,.kind.wolf_vote{background:rgba(255,93,115,.14);color:var(--spy)}
+  .kind.seer_inspect{background:rgba(255,200,87,.18);color:var(--warn)}
   .dagent{font-weight:700}
   .dagent.spy{color:var(--spy)}
   .dchoice{color:var(--txt)}
@@ -138,7 +141,7 @@
 <header>
   <div class="logo"></div>
   <div>
-    <h1>Jev Board Game <span class="sub">· Undercover · 上帝视角</span></h1>
+    <h1>Jev Board Game <span class="sub">· <span id="gametitle">Undercover</span> · 上帝视角</span></h1>
     <div class="sub">every player is an independent <b>Jev</b> agent</div>
   </div>
   <div class="spacer"></div>
@@ -173,7 +176,7 @@
         <div class="kv"><span>Players (Jev agents)</span><b id="m-players">—</b></div>
         <div class="kv"><span>Jev backend</span><b id="m-backend">—</b></div>
         <div class="kv"><span>Jev decisions</span><b id="m-decisions">—</b></div>
-        <div class="kv"><span>Undercover</span><b id="m-spy" class="pill spy">—</b></div>
+        <div class="kv"><span id="m-spylabel">Undercover</span><b id="m-spy" class="pill spy">—</b></div>
         <div class="kv"><span>Winner</span><b id="m-winner">—</b></div>
       </div>
       <div class="card">
@@ -182,12 +185,7 @@
       </div>
       <div class="card">
         <h3>Legend</h3>
-        <div class="legend">
-          <span><span class="dot" style="background:var(--civ)"></span>civilian</span>
-          <span><span class="dot" style="background:var(--spy)"></span>undercover</span>
-          <span><span class="dot" style="background:var(--good)"></span>correct guess</span>
-          <span><span class="dot" style="background:var(--warn)"></span>votes</span>
-        </div>
+        <div class="legend" id="legend"></div>
       </div>
     </div>
   </div>
@@ -217,23 +215,43 @@ const $ = s => document.querySelector(s);
 const board=$("#board"), seatsEl=$("#seats"), votesEl=$("#votes"), agentsEl=$("#agents");
 let G=null, steps=[], cur=0, playing=false, timer=null, positions={};
 
+const GOOD_WIN=["civilian","town"];
+function isWere(){return G && G.game_type==="werewolf";}
+function isHidden(id){return (G.hidden_team||[]).includes(id);}
+function roleOf(id){const p=G.players.find(p=>p.id===id);return p?p.role:"";}
+function labelOf(p){ // seat sub-line
+  if(isWere()) return isHidden(p.id)?"werewolf":(p.role||"villager");
+  return p.secret||"?";
+}
+function hiddenLabel(){return isWere()?"Werewolves":"Undercover";}
+
 function buildSteps(g){
   const s=[{type:"intro"}];
-  g.rounds.forEach((r,i)=>s.push({type:"clues",r:i},{type:"suspicion",r:i},{type:"votes",r:i},{type:"eliminated",r:i}));
+  const were=g.game_type==="werewolf";
+  g.rounds.forEach((r,i)=>{
+    if(were) s.push({type:"night",r:i});
+    s.push({type:"clues",r:i},{type:"suspicion",r:i},{type:"votes",r:i},{type:"eliminated",r:i});
+  });
   s.push({type:"result"});
   return s;
 }
+const PHASE_ORDER=["night","clues","suspicion","votes","eliminated"];
 function deadBefore(g, step){
   const dead=new Set();
   const upto=step.r===undefined?g.rounds.length:step.r;
+  const ci=PHASE_ORDER.indexOf(step.type);
   for(const r of g.rounds){
-    if(r.index<upto && r.eliminated) dead.add(r.eliminated);
-    if(r.index===upto && (step.type==="eliminated"||step.type==="result") && r.eliminated) dead.add(r.eliminated);
+    const nv=r.night_victim, ly=r.eliminated;
+    if(r.index<upto){ if(nv)dead.add(nv); if(ly)dead.add(ly); }
+    else if(r.index===upto && step.r!==undefined){
+      if(nv && ci>=PHASE_ORDER.indexOf("night")) dead.add(nv);
+      if(ly && ci>=PHASE_ORDER.indexOf("eliminated")) dead.add(ly);
+    }
   }
-  if(step.type==="result"){ for(const r of g.rounds) if(r.eliminated) dead.add(r.eliminated); }
+  if(step.type==="result"){ for(const r of g.rounds){ if(r.night_victim)dead.add(r.night_victim); if(r.eliminated)dead.add(r.eliminated);} }
   return dead;
 }
-function wordOf(id){const p=G.players.find(p=>p.id===id);return p?p.secret:"?";}
+function wordOf(id){const p=G.players.find(p=>p.id===id);return p?(p.secret||p.role||"?"):"?";}
 
 function layout(){
   const W=board.clientWidth||board.parentElement.clientWidth, H=520;
@@ -251,13 +269,14 @@ function renderSeats(step){
   G.players.forEach(p=>{
     const pos=positions[p.id];
     const el=document.createElement("div");
-    el.className="seat"+(p.id===G.undercover_id?" spy":"")+(dead.has(p.id)?" dead":"");
+    const seer = isWere() && p.role==="seer";
+    el.className="seat"+(isHidden(p.id)?" spy":"")+(seer?" seer":"")+(dead.has(p.id)?" dead":"");
     el.style.left=pos.x+"px";el.style.top=pos.y+"px";
     const initial=p.id.replace(/[^0-9]/g,"")||p.id[0];
     let clue="";
-    if(round){const c=round.clues.find(c=>c.speaker===p.id);if(c)clue=`<div class="bubble show">“${c.text}”</div>`;}
+    if(round){const c=(round.clues||[]).find(c=>c.speaker===p.id);if(c)clue=`<div class="bubble show">“${c.text}”</div>`;}
     el.innerHTML=`<div class="avatar">${initial}<span class="jevtag">JEV</span></div>
-      <div class="name">${p.id}</div><div class="word">${p.secret||"?"}</div>${clue}`;
+      <div class="name">${p.id}</div><div class="word">${labelOf(p)}</div>${clue}`;
     seatsEl.appendChild(el);
   });
 }
@@ -265,8 +284,12 @@ function renderLines(step){
   board.innerHTML="";
   if(step.r===undefined) return;
   const round=G.rounds[step.r];
+  if(step.type==="night" && round.seer_inspect){
+    const si=round.seer_inspect, f=positions[si.seer], t=positions[si.target];
+    if(f&&t) drawArrow(f,t, si.result==="werewolf"?"var(--spy)":"var(--good)", 2.6);
+  }
   if(step.type==="suspicion"){
-    round.beliefs.forEach(b=>{const f=positions[b.observer],t=positions[b.top];if(f&&t)drawArrow(f,t,b.top===G.undercover_id?"var(--good)":"rgba(139,125,255,.55)",1+b.top_prob*5);});
+    round.beliefs.forEach(b=>{const f=positions[b.observer],t=positions[b.top];if(f&&t)drawArrow(f,t,isHidden(b.top)?"var(--good)":"rgba(139,125,255,.55)",1+b.top_prob*5);});
   }
   if(step.type==="votes"||step.type==="eliminated"){
     round.votes.forEach(v=>{const f=positions[v.voter],t=positions[v.target];if(f&&t)drawArrow(f,t,"var(--warn)",2.2);});
@@ -294,28 +317,29 @@ function renderAgents(step){
   G.players.forEach(p=>{
     const el=document.createElement("div");
     const isDead=dead.has(p.id);
-    el.className="agent"+(p.id===G.undercover_id?" spy":"")+(isDead?" dead":"")+((round&&!isDead)?" active":"")+(reveal?" reveal":"");
+    el.className="agent"+(isHidden(p.id)?" spy":"")+(isDead?" dead":"")+((round&&!isDead)?" active":"")+(reveal?" reveal":"");
     const initial=p.id.replace(/[^0-9]/g,"")||p.id[0];
-    const b = round ? round.beliefs.find(b=>b.observer===p.id) : null;
-    const clueText = round ? (round.clues.find(c=>c.speaker===p.id)||{}).text : "";
+    const b = round ? (round.beliefs||[]).find(b=>b.observer===p.id) : null;
+    const clueText = round ? ((round.clues||[]).find(c=>c.speaker===p.id)||{}).text : "";
 
     let said = showClue && clueText ? `<div class="line"><span class="ic">💬</span><span class="said">“${clueText}”</span></div>` : "";
     let accuse="", reason="", bars="", conf="";
     if(reveal && b){
-      const hit=b.top===G.undercover_id;
+      const hit=isHidden(b.top);
       accuse=`<div class="line accuse"><span class="ic">🎯</span><span>accuses <b class="${hit?'hit':''}">${b.top}</b> · ${Math.round(b.top_prob*100)}%</span></div>`;
       reason=`<div class="line reason"><span class="ic">🧠</span><span>${b.rationale?b.rationale.text:""}</span></div>`;
       const rows=Object.entries(b.distribution).sort((a,c)=>c[1]-a[1]).slice(0,3).map(([pid,pr])=>{
-        const h=pid===G.undercover_id;
+        const h=isHidden(pid);
         return `<div class="brow"><span class="who">${pid}</span><span class="track"><i class="fill${h?' hit':''}" style="width:${Math.round(pr*100)}%"></i></span><span class="pct">${Math.round(pr*100)}%</span></div>`;
       }).join("");
       bars=`<div class="bars">${rows}</div>`;
       const st=b.rationale?b.rationale.strength:"weak";
       conf=`<div class="conf">accusation strength: <span class="tagc ${st}">${st}</span> · confidence ${Math.round((b.confidence||0)*100)}%</div>`;
     }
+    const tag = isWere() ? (isHidden(p.id)?"WEREWOLF":(p.role||"villager")) : ("word: "+(p.secret||"?")+(isHidden(p.id)?" · SPY":""));
     el.innerHTML=`<div class="ahead"><div class="aav">${initial}</div>
         <span class="aname">${p.id}</span><span class="abadge">JEV</span>
-        <span class="aword">word: ${p.secret||"?"}${p.id===G.undercover_id?" · SPY":""}</span></div>
+        <span class="aword">${tag}</span></div>
       ${said}${accuse}${reason}${bars}${conf}`;
     agentsEl.appendChild(el);
   });
@@ -324,7 +348,7 @@ function renderAgents(step){
 function trunc(s,n){s=s||"";return s.length>n?s.slice(0,n-1)+"…":s;}
 function distRows(options,limit){
   return Object.entries(options).sort((a,b)=>b[1]-a[1]).slice(0,limit).map(([k,pr])=>{
-    const hit=k===G.undercover_id;
+    const hit=isHidden(k);
     return `<div class="r"><span class="k">${trunc(k,26)}</span><span class="t"><i class="${hit?'hit':''}" style="width:${Math.round(pr*100)}%"></i></span><span class="p">${Math.round(pr*100)}%</span></div>`;
   }).join("");
 }
@@ -336,58 +360,66 @@ function renderDecisions(step){
     if(!decs.length) return;
     const block=document.createElement("div");
     block.className="dround"+(r.index===here?" here":"");
+    const ARROW={suspect:"accuses →",night_kill:"kills →",seer_inspect:"inspects →",wolf_vote:"votes →"};
+    const TEXT_KINDS=new Set(["clue","statement"]);
     let rows="";
     decs.forEach(d=>{
-      const spy = d.agent===G.undercover_id;
-      const isSuspect = d.kind==="suspect";
-      const hit = isSuspect && d.choice===G.undercover_id;
+      const spy = isHidden(d.agent);
       let choiceHtml;
-      if(isSuspect){
-        choiceHtml=`<span class="dchoice"><span class="arrow">accuses →</span><span class="pick ${hit?'hit':''}">${d.choice}</span></span>`;
-      }else{
+      if(TEXT_KINDS.has(d.kind)){
         const alts=Object.entries(d.options).sort((a,b)=>b[1]-a[1]).filter(([k])=>k!==d.choice).slice(0,2)
           .map(([k,p])=>`“${trunc(k,22)}” ${Math.round(p*100)}%`).join(" · ");
         choiceHtml=`<span class="dchoice"><span class="pick">“${trunc(d.choice,40)}”</span>`+
           (alts?`<div class="over">picked over: ${alts}</div>`:"")+`</span>`;
+      }else{
+        const hit = (d.kind==="suspect"||d.kind==="seer_inspect") && isHidden(d.choice);
+        choiceHtml=`<span class="dchoice"><span class="arrow">${ARROW[d.kind]||"→"}</span><span class="pick ${hit?'hit':''}">${d.choice}</span></span>`;
       }
       rows+=`<div class="drow">
-        <span class="kind ${d.kind}">${d.kind.toUpperCase()}</span>
+        <span class="kind ${d.kind}">${d.kind.replace("_"," ").toUpperCase()}</span>
         <span class="dagent ${spy?'spy':''}">${d.agent}</span>
         ${choiceHtml}
-        <span class="ddist">${distRows(d.options, isSuspect?3:3)}<span class="conf-chip">conf ${Math.round((d.confidence||0)*100)}%</span></span>
+        <span class="ddist">${distRows(d.options, 3)}<span class="conf-chip">conf ${Math.round((d.confidence||0)*100)}%</span></span>
       </div>`;
     });
-    const nClue=decs.filter(d=>d.kind==="clue").length, nSus=decs.filter(d=>d.kind==="suspect").length;
-    block.innerHTML=`<div class="dhead">Round ${r.index+1}<span class="rtag">· ${nClue} clue + ${nSus} suspicion decisions</span></div>${rows}`;
+    block.innerHTML=`<div class="dhead">Round ${r.index+1}<span class="rtag">· ${decs.length} Jev decisions</span></div>${rows}`;
     el.appendChild(block);
   });
 }
 
-const PHASE={intro:"Words dealt",clues:"Clues",suspicion:"Suspicion",votes:"Voting",eliminated:"Elimination",result:"Result"};
+const PHASE={intro:"Roles dealt",night:"Night",clues:"Clues",suspicion:"Suspicion",votes:"Voting",eliminated:"Elimination",result:"Result"};
+function winLabel(){return GOOD_WIN.includes(G.winner)?(isWere()?"TOWN":"CIVILIANS"):(isWere()?"WEREWOLVES":"UNDERCOVER");}
 function render(){
   const step=steps[cur];
   layout();renderSeats(step);renderLines(step);renderVotes(step);renderAgents(step);renderDecisions(step);
   const round=step.r!==undefined?G.rounds[step.r]:null;
+  const phaseName = (step.type==="clues" && isWere()) ? "Day · statements" : (PHASE[step.type]||"");
   $("#rdlabel").textContent=round?`Round ${round.index+1}`:(step.type==="result"?"Final":"Setup");
-  $("#phaselabel").textContent=PHASE[step.type]||"";
-  $("#ah-phase").textContent=round?`Round ${round.index+1} · ${PHASE[step.type]}`:PHASE[step.type];
+  $("#phaselabel").textContent=phaseName;
+  $("#ah-phase").textContent=round?`Round ${round.index+1} · ${phaseName}`:phaseName;
   const pct=steps.length>1?100*cur/(steps.length-1):0;
   $("#prog").style.width=pct+"%";
 
   const log=$("#log");log.innerHTML="";
   steps.slice(0,cur+1).filter(s=>s.type!=="intro").forEach(s=>{
     const r=s.r!==undefined?G.rounds[s.r]:null;let html="";
-    if(s.type==="clues"&&r)html=`<b>R${r.index+1}</b> ${r.clues.length} Jev agents gave clues`;
+    if(s.type==="night"&&r){
+      const parts=[];
+      if(r.night_victim) parts.push(`🌙 ${r.night_victim} killed`);
+      if(r.seer_inspect){const wr=r.seer_inspect.result==="werewolf";parts.push(`🔮 seer→${r.seer_inspect.target} <span style="color:${wr?'var(--spy)':'var(--good)'}">${r.seer_inspect.result}</span>`);}
+      html=`<b>R${r.index+1}</b> ${parts.join(" · ")||"quiet night"}`;
+    }
+    else if(s.type==="clues"&&r)html=`<b>R${r.index+1}</b> ${(r.clues||[]).length} Jev agents spoke`;
     else if(s.type==="suspicion"&&r)html=`<b>R${r.index+1}</b> each Jev formed a belief`;
     else if(s.type==="votes"&&r){const t=Object.entries(r.tally).sort((a,b)=>b[1]-a[1]).map(([p,n])=>`${p}×${n}`).join(", ");html=`<b>R${r.index+1}</b> votes: ${t}`;}
-    else if(s.type==="eliminated"&&r&&r.eliminated){const spy=r.eliminated===G.undercover_id;html=`<b>${r.eliminated}</b> voted out — ${spy?'<span style="color:var(--good)">was the undercover ✓</span>':'<span style="color:var(--spy)">civilian ✗</span>'}`;}
-    else if(s.type==="result")html=`<b>${G.winner==="civilian"?"Civilians":"Undercover"} win</b>`;
+    else if(s.type==="eliminated"&&r&&r.eliminated){const hid=isHidden(r.eliminated);const good=isWere()?"was a werewolf ✓":"was the undercover ✓";const bad=isWere()?"was town ✗":"civilian ✗";html=`<b>${r.eliminated}</b> voted out — ${hid?'<span style="color:var(--good)">'+good+'</span>':'<span style="color:var(--spy)">'+bad+'</span>'}`;}
+    else if(s.type==="result")html=`<b>${winLabel()} win</b>`;
     if(html){const d=document.createElement("div");d.className="ev";d.innerHTML=html;log.appendChild(d);}
   });
   log.scrollTop=log.scrollHeight;
 
   const win=$("#winner");
-  if(step.type==="result"){win.classList.add("show");const civ=G.winner==="civilian";$("#winbig").textContent=civ?"CIVILIANS WIN":"UNDERCOVER WINS";$("#winbig").style.color=civ?"var(--good)":"var(--spy)";$("#winsmall").textContent=`${G.rounds_played} round(s) · undercover was ${G.undercover_id} (${wordOf(G.undercover_id)})`;}
+  if(step.type==="result"){win.classList.add("show");const good=GOOD_WIN.includes(G.winner);$("#winbig").textContent=winLabel()+" WIN";$("#winbig").style.color=good?"var(--good)":"var(--spy)";const team=(G.hidden_team||[]).join(", ");$("#winsmall").textContent=`${G.rounds_played} round(s) · ${hiddenLabel().toLowerCase()}: ${team}`;}
   else win.classList.remove("show");
   $("#prev").disabled=cur===0;$("#next").disabled=cur===steps.length-1;
 }
@@ -398,13 +430,20 @@ function loadGame(idx){
   stop();G=GAMES[idx];steps=buildSteps(G);cur=0;
   $("#m-players").textContent=G.players.length;$("#m-backend").textContent=G.backend||"offline";
   $("#m-decisions").textContent=G.n_decisions!=null?G.n_decisions:"—";
-  $("#m-spy").textContent=`${G.undercover_id} (${wordOf(G.undercover_id)})`;
-  const civ=G.winner==="civilian";$("#m-winner").innerHTML=`<span class="pill ${civ?'civ':'spy'}">${civ?'Civilians':'Undercover'}</span>`;
+  $("#m-spylabel").textContent=hiddenLabel();
+  const team=(G.hidden_team||[]);
+  $("#m-spy").textContent=isWere()?team.join(", "):`${G.undercover_id} (${wordOf(G.undercover_id)})`;
+  const good=GOOD_WIN.includes(G.winner);$("#m-winner").innerHTML=`<span class="pill ${good?'civ':'spy'}">${winLabel().charAt(0)+winLabel().slice(1).toLowerCase()}</span>`;
+  document.querySelector("#gametitle").textContent = isWere()?"Werewolf":"Undercover";
+  const dot=(c,l)=>`<span><span class="dot" style="background:var(${c})"></span>${l}</span>`;
+  $("#legend").innerHTML = isWere()
+    ? dot("--civ","town")+dot("--spy","werewolf")+dot("--warn","seer")+dot("--good","correct guess")+dot("--warn","votes")
+    : dot("--civ","civilian")+dot("--spy","undercover")+dot("--good","correct guess")+dot("--warn","votes");
   render();
 }
 (function(){
   const sel=$("#gamesel");
-  GAMES.forEach((g,i)=>{const o=document.createElement("option");o.value=i;o.textContent=`#${i+1} · ${g.players.length}p · ${g.winner==="civilian"?"civ":"spy"} win`;sel.appendChild(o);});
+  GAMES.forEach((g,i)=>{const o=document.createElement("option");o.value=i;const good=GOOD_WIN.includes(g.winner);const w=g.game_type==="werewolf"?(good?"town":"wolf"):(good?"civ":"spy");o.textContent=`#${i+1} · ${g.players.length}p · ${w} win`;sel.appendChild(o);});
   sel.onchange=e=>loadGame(+e.target.value);
   $("#play").onclick=()=>playing?stop():play();
   $("#next").onclick=()=>{stop();go(cur+1);};

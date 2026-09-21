@@ -43,9 +43,10 @@ def _binary_pairs(records: Sequence[BeliefRecord]) -> tuple[np.ndarray, np.ndarr
     preds: list[float] = []
     labels: list[float] = []
     for r in records:
+        truths = r.truths()
         for cand, p in r.distribution.items():
             preds.append(float(p))
-            labels.append(1.0 if cand == r.ground_truth_id else 0.0)
+            labels.append(1.0 if cand in truths else 0.0)
     return np.asarray(preds, dtype=float), np.asarray(labels, dtype=float)
 
 
@@ -80,9 +81,10 @@ def brier_score(records: Sequence[BeliefRecord]) -> float:
         return 0.0
     total = 0.0
     for r in records:
+        truths = r.truths()
         s = 0.0
         for cand, p in r.distribution.items():
-            y = 1.0 if cand == r.ground_truth_id else 0.0
+            y = 1.0 if cand in truths else 0.0
             s += (p - y) ** 2
         total += s
     return total / len(records)
@@ -96,7 +98,7 @@ def top1_accuracy(records: Sequence[BeliefRecord]) -> float:
         if not r.distribution:
             continue
         pick = max(r.distribution, key=lambda k: r.distribution[k])
-        hits += int(pick == r.ground_truth_id)
+        hits += int(pick in r.truths())
     return hits / len(records)
 
 

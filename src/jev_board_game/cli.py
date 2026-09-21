@@ -1,4 +1,4 @@
-"""Command-line entry point: run Undercover games and print/plot the analysis."""
+"""Command-line entry point: run a game with Jev-backed agents and report analysis."""
 
 from __future__ import annotations
 
@@ -7,8 +7,9 @@ import json
 import sys
 from dataclasses import asdict
 
-from .experiment import sweep
-from .jev.client import get_backend
+from .engine.events import GameResult, Team
+from .engine.game import SocialDeductionGame
+from .jev.client import JevBackend, get_backend
 
 
 def _int_list(value: str) -> list[int]:
@@ -18,7 +19,13 @@ def _int_list(value: str) -> list[int]:
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="jev-undercover",
-        description="Run Undercover with Jev-backed agents and report belief calibration.",
+        description="Run a social-deduction game with Jev agents and report belief calibration.",
+    )
+    p.add_argument(
+        "--game",
+        choices=["undercover", "werewolf"],
+        default="undercover",
+        help="which game to run",
     )
     p.add_argument("--games", type=int, default=20, help="games per configuration")
     p.add_argument(
@@ -31,7 +38,10 @@ def build_parser() -> argparse.ArgumentParser:
         "--max-reveal",
         type=_int_list,
         default=[2],
-        help="clue reveal ceiling(s) 0..2, comma-separated for a sweep",
+        help="[undercover] clue reveal ceiling(s) 0..2, comma-separated for a sweep",
+    )
+    p.add_argument(
+        "--werewolves", type=int, default=1, help="[werewolf] number of werewolves"
     )
     p.add_argument("--seed", type=int, default=0, help="base RNG seed")
     p.add_argument(
@@ -55,87 +65,112 @@ def build_parser() -> argparse.ArgumentParser:
     return p
 
 
+def _build_game(
+    args: argparse.Namespace, backend: JevBackend, seed: int
+) -> SocialDeductionGame:
+    if args.game == "werewolf":
+        from .games.werewolf import Werewolf
+
+        return Werewolf(
+            backend=backend,
+            n_players=args.players[0],
+            n_werewolves=args.werewolves,
+            seed=seed,
+        )
+    from .games.undercover import Undercover
+
+    return Undercover(
+        backend=backend,
+        n_players=args.players[0],
+        max_reveal=args.max_reveal[0],
+        seed=seed,
+    )
+
+
+def _run_stats(args: argparse.Namespace, backend: JevBackend) -> int:
+    if args.game == "undercover":
+        from .experiment import sweep
+
+        results = sweep(
+            backend,
+            player_counts=args.players,
+            reveal_levels=args.max_reveal,
+            games=args.games,
+            base_seed=args.seed,
+        )
+        print(f"backend: {backend.name}\n")
+        for r in results:
+            print(r.summary())
+        if args.plot:
+            if len(results) != 1:
+                print("\n--plot needs a single config", file=sys.stderr)
+                return 2
+            from .analysis.trajectories import plot_trajectory
+
+            plot_trajectory(results[0].trajectory, args.plot)
+            print(f"\nsaved plot -> {args.plot}")
+        if args.json:
+            payload = [
+                {
+                    "config": asdict(r.config),
+                    "games_played": r.games_played,
+                    "civilian_win_rate": r.civilian_win_rate,
+                    "mean_rounds": r.mean_rounds,
+                    "calibration": asdict(r.calibration),
+                    "trajectory": [asdict(t) for t in r.trajectory],
+                }
+                for r in results
+            ]
+            with open(args.json, "w", encoding="utf-8") as fh:
+                json.dump(payload, fh, indent=2)
+            print(f"\nsaved results -> {args.json}")
+        return 0
+
+    # werewolf stats
+    from .analysis.calibration import analyze
+
+    games: list[GameResult] = [
+        _build_game(args, backend, args.seed + i).play() for i in range(args.games)
+    ]
+    beliefs = [b for g in games for b in g.beliefs]
+    town = sum(1 for g in games if g.winner is Team.TOWN)
+    mean_rounds = sum(g.rounds_played for g in games) / len(games) if games else 0.0
+    report = analyze(beliefs)
+    print(f"backend: {backend.name}\n")
+    print(
+        f"[werewolf players={args.players[0]},wolves={args.werewolves}] games={len(games)} "
+        f"town_win_rate={town / len(games):.3f} mean_rounds={mean_rounds:.2f} | {report.summary()}"
+    )
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     prefer = {"auto": None, "offline": False, "live": True}[args.backend]
     backend = get_backend(prefer_live=prefer)
 
     if args.watch:
-        from .games.undercover import Undercover
         from .replay import narrate
 
-        game = Undercover(
-            backend=backend,
-            n_players=args.players[0],
-            max_reveal=args.max_reveal[0],
-            seed=args.seed,
-        )
         print(f"backend: {backend.name}\n")
-        print(narrate(game.play()))
+        print(narrate(_build_game(args, backend, args.seed).play()))
         return 0
 
     if args.web:
-        from .games.undercover import Undercover
         from .webexport import export_html, game_to_dict
 
         n_games = max(1, args.games)
         games = [
-            game_to_dict(
-                Undercover(
-                    backend=backend,
-                    n_players=args.players[0],
-                    max_reveal=args.max_reveal[0],
-                    seed=args.seed + i,
-                ).play(),
-                backend=backend.name,
-            )
+            game_to_dict(_build_game(args, backend, args.seed + i).play(), backend=backend.name)
             for i in range(n_games)
         ]
         export_html(games, args.web)
         print(f"backend: {backend.name}")
-        print(f"baked {n_games} game(s) -> {args.web}")
+        print(f"baked {n_games} {args.game} game(s) -> {args.web}")
         print(f"open it in a browser:  open {args.web}")
         return 0
 
-    results = sweep(
-        backend,
-        player_counts=args.players,
-        reveal_levels=args.max_reveal,
-        games=args.games,
-        base_seed=args.seed,
-    )
-
-    print(f"backend: {backend.name}\n")
-    for r in results:
-        print(r.summary())
-
-    if args.plot:
-        if len(results) != 1:
-            print("\n--plot needs a single config (one --players and one --max-reveal)",
-                  file=sys.stderr)
-            return 2
-        from .analysis.trajectories import plot_trajectory
-
-        plot_trajectory(results[0].trajectory, args.plot)
-        print(f"\nsaved plot -> {args.plot}")
-
-    if args.json:
-        payload = [
-            {
-                "config": asdict(r.config),
-                "games_played": r.games_played,
-                "civilian_win_rate": r.civilian_win_rate,
-                "mean_rounds": r.mean_rounds,
-                "calibration": asdict(r.calibration),
-                "trajectory": [asdict(t) for t in r.trajectory],
-            }
-            for r in results
-        ]
-        with open(args.json, "w", encoding="utf-8") as fh:
-            json.dump(payload, fh, indent=2)
-        print(f"\nsaved results -> {args.json}")
-
-    return 0
+    return _run_stats(args, backend)
 
 
 if __name__ == "__main__":
