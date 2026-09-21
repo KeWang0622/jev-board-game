@@ -1,4 +1,4 @@
-"""Concrete games. Undercover and Werewolf are implemented; Avalon is a scaffold."""
+"""Concrete games: Undercover, Werewolf, and Avalon."""
 
 from .avalon import Avalon
 from .undercover import Undercover, load_word_pairs

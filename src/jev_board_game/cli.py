@@ -23,7 +23,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p.add_argument(
         "--game",
-        choices=["undercover", "werewolf"],
+        choices=["undercover", "werewolf", "avalon"],
         default="undercover",
         help="which game to run",
     )
@@ -77,6 +77,10 @@ def _build_game(
             n_werewolves=args.werewolves,
             seed=seed,
         )
+    if args.game == "avalon":
+        from .games.avalon import Avalon
+
+        return Avalon(backend=backend, n_players=args.players[0], seed=seed)
     from .games.undercover import Undercover
 
     return Undercover(
@@ -126,20 +130,23 @@ def _run_stats(args: argparse.Namespace, backend: JevBackend) -> int:
             print(f"\nsaved results -> {args.json}")
         return 0
 
-    # werewolf stats
+    # werewolf / avalon stats
     from .analysis.calibration import analyze
 
     games: list[GameResult] = [
         _build_game(args, backend, args.seed + i).play() for i in range(args.games)
     ]
     beliefs = [b for g in games for b in g.beliefs]
-    town = sum(1 for g in games if g.winner is Team.TOWN)
+    good = sum(1 for g in games if g.winner in (Team.TOWN, Team.GOOD))
     mean_rounds = sum(g.rounds_played for g in games) / len(games) if games else 0.0
     report = analyze(beliefs)
+    cfg = (
+        f"wolves={args.werewolves}" if args.game == "werewolf" else f"n={args.players[0]}"
+    )
     print(f"backend: {backend.name}\n")
     print(
-        f"[werewolf players={args.players[0]},wolves={args.werewolves}] games={len(games)} "
-        f"town_win_rate={town / len(games):.3f} mean_rounds={mean_rounds:.2f} | {report.summary()}"
+        f"[{args.game} players={args.players[0]},{cfg}] games={len(games)} "
+        f"good_win_rate={good / len(games):.3f} mean_rounds={mean_rounds:.2f} | {report.summary()}"
     )
     return 0
 
@@ -157,6 +164,13 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.web:
+        if args.game == "avalon":
+            print(
+                "The web viewer does not support Avalon yet — use --watch for the "
+                "terminal God's-eye view.",
+                file=sys.stderr,
+            )
+            return 2
         from .webexport import export_html, game_to_dict
 
         n_games = max(1, args.games)

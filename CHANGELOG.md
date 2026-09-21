@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Avalon** (The Resistance) implemented on the shared contract: 5 quests with
+  team proposals, approve/reject votes (Jev `Noul`), quest success/fail with evil
+  sabotage (Jev `Noul`), and the Assassin's Merlin guess (Jev `Choice`). Good
+  players' belief over who is evil is logged each quest and scored against the evil
+  team. Includes `Team.GOOD`/`EVIL`, terminal God's-eye `--watch`, `--game avalon`,
+  and tests. (Offline backend favors evil — blind good loses; run live Jev for
+  balanced play. Web viewer for Avalon's quest board is a follow-up.)
 - **Werewolf** fully implemented: werewolves, a seer, and villagers over a
   night/day cycle — night kill (combined across the wolf pack), seer inspection,
   day statements, town suspicion, and voting, all via Jev `Choice`. Town suspicion

@@ -9,8 +9,9 @@ from __future__ import annotations
 
 import sys
 from collections import Counter
+from typing import cast
 
-from .engine.events import Clue, GameResult, Team, Vote
+from .engine.events import BeliefRecord, Clue, GameResult, Team, Vote
 
 _BLOCKS = "▁▂▃▄▅▆▇█"
 
@@ -55,6 +56,8 @@ def _bar(p: float, width: int = 12) -> str:
 def narrate(result: GameResult, color: bool | None = None) -> str:
     if result.game_type == "werewolf":
         return _narrate_werewolf(result, color)
+    if result.game_type == "avalon":
+        return _narrate_avalon(result, color)
     return _narrate_undercover(result, color)
 
 
@@ -201,6 +204,70 @@ def _narrate_werewolf(result: GameResult, color: bool | None = None) -> str:
     banner = s.green(winner) if town_win else s.red(winner)
     lines.append("=" * 62)
     lines.append(s.bold(f"Result: {banner} win in {result.rounds_played} round(s)"))
+    lines.append("=" * 62)
+    return "\n".join(lines)
+
+
+def _narrate_avalon(result: GameResult, color: bool | None = None) -> str:
+    s = _Style(sys.stdout.isatty() if color is None else color)
+    evil = {p.id for p in result.players if p.team is Team.EVIL}
+    role = {p.id: p.role for p in result.players}
+    lines: list[str] = []
+
+    lines.append("=" * 62)
+    lines.append(s.bold("  AVALON · 上帝视角 (God's-eye view)"))
+    lines.append("=" * 62)
+    lines.append(s.dim("Secret roles (hidden from the players):"))
+    for p in result.players:
+        if p.team is Team.EVIL:
+            lines.append(f"  {s.red(p.id)}  {s.red(p.role.upper())}")
+        elif p.role == "merlin":
+            lines.append(f"  {s.cyan(p.id)}  {s.yellow('MERLIN')}")
+        else:
+            lines.append(f"  {s.cyan(p.id)}  servant")
+    lines.append("-" * 62)
+
+    beliefs_by_q: dict[int, list[BeliefRecord]] = {}
+    for b in result.beliefs:
+        beliefs_by_q.setdefault(b.round_index, []).append(b)
+
+    for q in result.quests:
+        qi = cast("int", q.get("index", 0))
+        lines.append(s.bold(f"Quest {qi + 1}"))
+        if q.get("hammer"):
+            lines.append(s.red("  ✋ five teams rejected in a row — evil wins by hammer"))
+            lines.append("")
+            continue
+        team = cast("list[str]", q.get("team", []))
+        team_str = ", ".join(s.red(t) if t in evil else s.cyan(t) for t in team)
+        ok = q.get("success")
+        badge = s.green("SUCCESS ✓") if ok else s.red(f"FAIL ✗ ({q.get('fails')} fail card(s))")
+        lines.append(f"  Team: {team_str}  →  {badge}")
+
+        for b in sorted(beliefs_by_q.get(qi, []), key=lambda x: x.observer_id):
+            if not b.distribution:
+                continue
+            top = max(b.distribution, key=lambda k: b.distribution[k])
+            prob = b.distribution[top]
+            hit = top in evil
+            mark = s.green("✓") if hit else s.dim("·")
+            is_merlin = role.get(b.observer_id) == "merlin"
+            who = s.yellow(b.observer_id) if is_merlin else s.cyan(b.observer_id)
+            shown = s.red(top) if hit else top
+            lines.append(f"    {who} suspects {shown} {mark} [{_bar(prob)}] {prob:.0%}")
+        lines.append("")
+
+    guess = next((d for d in result.decisions if d.kind == "assassinate"), None)
+    if guess:
+        correct = role.get(guess.choice) == "merlin"
+        verdict = s.red("correct — evil steals it ✓") if correct else s.green("wrong ✗")
+        lines.append(f"🗡  Assassin guesses Merlin = {s.bold(guess.choice)} ({verdict})")
+
+    good_win = result.winner is Team.GOOD
+    winner = "GOOD" if good_win else "EVIL"
+    banner = s.green(winner) if good_win else s.red(winner)
+    lines.append("=" * 62)
+    lines.append(s.bold(f"Result: {banner} win"))
     lines.append("=" * 62)
     return "\n".join(lines)
 

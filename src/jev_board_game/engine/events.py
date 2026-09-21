@@ -13,6 +13,9 @@ class Team(str, Enum):
     # Werewolf
     TOWN = "town"
     WEREWOLF = "werewolf"
+    # Avalon
+    GOOD = "good"
+    EVIL = "evil"
 
 
 @dataclass(frozen=True)
@@ -97,9 +100,13 @@ class GameResult:
     game_type: str = "undercover"
     # Werewolf: id killed by wolves at night per round ("" if none/no night).
     night_kills: list[str] = field(default_factory=list)
+    # Avalon: per-quest summary dicts (leader, team, approved, fails, success, ...).
+    quests: list[dict[str, object]] = field(default_factory=list)
 
     def hidden_team(self) -> list[str]:
-        """Ids of the hidden/adversary team (undercover holder(s) or werewolves)."""
+        """Ids of the hidden/adversary team (undercover holder(s), werewolves, evil)."""
         if self.game_type == "werewolf":
             return [p.id for p in self.players if p.team is Team.WEREWOLF]
+        if self.game_type == "avalon":
+            return [p.id for p in self.players if p.team is Team.EVIL]
         return [self.undercover_id] if self.undercover_id else []

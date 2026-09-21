@@ -43,7 +43,7 @@ model for a belief and correcting it, the belief *is* the model's direct answer:
 | --- | --- |
 | **Undercover** (Who-Is-The-Spy) | ✅ fully implemented (reference game) |
 | **Werewolf** / Mafia | ✅ fully implemented (werewolves, seer, villagers; night kill + inspect + day vote) |
-| Avalon (The Resistance) | 🚧 scaffolded |
+| **Avalon** (The Resistance) | ✅ engine + terminal + analysis (quests, approval votes, sabotage, Assassin's Merlin guess) · web viewer pending |
 
 Everything runs **offline with no API key** via a deterministic stand-in backend, so
 the demo, experiments, and CI work out of the box. Set `TYPESAFE_API_KEY` to swap in
@@ -75,6 +75,10 @@ jev-undercover --games 20 --players 4,5,6 --max-reveal 0,1,2
 jev-undercover --game werewolf --watch --players 6 --seed 4
 jev-undercover --game werewolf --web werewolf-viewer.html --games 6 && open werewolf-viewer.html
 jev-undercover --game werewolf --games 40 --players 6 --werewolves 1
+
+# AVALON (terminal watch + stats; web viewer pending)
+jev-undercover --game avalon --watch --players 6 --seed 5
+jev-undercover --game avalon --games 40 --players 6
 
 # real Jev (needs TYPESAFE_API_KEY); dump machine-readable results
 jev-undercover --backend live --games 50 --players 5 --json runs/live.json
