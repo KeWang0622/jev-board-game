@@ -11,7 +11,7 @@ from __future__ import annotations
 import json
 from collections import Counter
 from importlib import resources
-from typing import Any
+from typing import Any, cast
 
 from .engine.events import GameResult
 
@@ -142,8 +142,89 @@ def _is_seer(result: GameResult, pid: str) -> bool:
     return any(p.id == pid and p.role == "seer" for p in result.players)
 
 
+def _avalon_beliefs(result: GameResult, qi: int, hidden_team: set[str]) -> list[dict[str, Any]]:
+    n_alive = len(result.players)
+    out = []
+    for b in result.beliefs:
+        if b.round_index != qi:
+            continue
+        top = max(b.distribution, key=lambda k: b.distribution[k]) if b.distribution else ""
+        out.append(
+            {
+                "observer": b.observer_id,
+                "own_clue": "",
+                "distribution": b.distribution,
+                "confidence": b.confidence,
+                "top": top,
+                "top_prob": b.distribution.get(top, 0.0),
+                "rationale": _rationale(b.distribution, {}, hidden_team, {}, n_alive),
+            }
+        )
+    return out
+
+
+def _avalon_dict(result: GameResult, backend: str, hidden_team: set[str]) -> dict[str, Any]:
+    merlin = next((p.id for p in result.players if p.role == "merlin"), "")
+    rounds: list[dict[str, Any]] = []
+    for q in result.quests:
+        qi = cast("int", q.get("index", 0))
+        decisions = [
+            {
+                "agent": d.agent_id,
+                "kind": d.kind,
+                "question": d.question,
+                "options": d.options,
+                "choice": d.choice,
+                "confidence": d.confidence,
+            }
+            for d in result.decisions
+            if d.round_index == qi
+        ]
+        rounds.append(
+            {
+                "index": qi,
+                "clues": [],
+                "beliefs": _avalon_beliefs(result, qi, hidden_team),
+                "decisions": decisions,
+                "team": q.get("team", []),
+                "approved": q.get("approved", False),
+                "approvals": q.get("approvals", {}),
+                "success": q.get("success", False),
+                "fails": q.get("fails", 0),
+                "required_fails": q.get("required_fails", 1),
+                "hammer": q.get("hammer", False),
+            }
+        )
+    assassin = next((d for d in result.decisions if d.kind == "assassinate"), None)
+    assassin_out = None
+    if assassin:
+        assassin_out = {
+            "assassin": assassin.agent_id,
+            "target": assassin.choice,
+            "correct": assassin.choice == merlin,
+        }
+    return {
+        "game_type": "avalon",
+        "backend": backend,
+        "winner": result.winner.value,
+        "rounds_played": result.rounds_played,
+        "n_decisions": len(result.decisions),
+        "undercover_id": "",
+        "hidden_team": sorted(hidden_team),
+        "merlin": merlin,
+        "assassin": assassin_out,
+        "players": [
+            {"id": p.id, "team": p.team.value, "role": p.role, "secret": p.secret}
+            for p in result.players
+        ],
+        "rounds": rounds,
+    }
+
+
 def game_to_dict(result: GameResult, backend: str = "offline") -> dict[str, Any]:
     hidden_team = set(result.hidden_team())
+    if result.game_type == "avalon":
+        return _avalon_dict(result, backend, hidden_team)
     n_rounds = max((c.round_index for c in result.transcript), default=-1) + 1
     n_rounds = max(n_rounds, len(result.night_kills))
     rounds = [_round_dict(result, r, hidden_team) for r in range(n_rounds)]

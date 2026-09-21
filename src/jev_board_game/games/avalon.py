@@ -105,6 +105,8 @@ class Avalon(SocialDeductionGame):
                               history, quest_i, beliefs, decisions)
 
             approved_team: list[str] | None = None
+            approvals: dict[str, bool] = {}
+            leader = order[leader_idx % len(order)]
             for _attempt in range(5):
                 leader = order[leader_idx % len(order)]
                 leader_idx += 1
@@ -112,11 +114,13 @@ class Avalon(SocialDeductionGame):
                                      failed_teams, history, size)
                 # --- approval vote ---
                 yes = 0
+                attempt_votes: dict[str, bool] = {}
                 for pid in order:
                     read = self._team_read(agents[pid], team, players, evil, on_teams,
                                           failed_teams, history)
                     p_ok = agents[pid].approve(team, read, history)
                     ok = p_ok >= _APPROVE_THRESHOLD
+                    attempt_votes[pid] = ok
                     votes.append(Vote(quest_i, pid, "approve" if ok else "reject"))
                     decisions.append(JevDecision(quest_i, pid, "approve",
                         AvalonAgent.APPROVE_Q, {"approve": p_ok, "reject": 1 - p_ok},
@@ -124,6 +128,7 @@ class Avalon(SocialDeductionGame):
                     yes += int(ok)
                 if yes * 2 > len(order):
                     approved_team = team
+                    approvals = attempt_votes
                     history.append(f"Q{quest_i + 1}: team {team} approved ({yes}/{len(order)})")
                     break
                 history.append(f"Q{quest_i + 1}: team {team} rejected ({yes}/{len(order)})")
@@ -153,9 +158,10 @@ class Avalon(SocialDeductionGame):
             if not success:
                 for pid in approved_team:
                     failed_teams[pid] += 1
-            quests.append({"index": quest_i, "leader": approved_team[0], "team": approved_team,
+            quests.append({"index": quest_i, "leader": leader, "team": approved_team,
                           "approved": True, "success": success, "fails": n_fail,
-                          "required_fails": self._required_fails(quest_i)})
+                          "required_fails": self._required_fails(quest_i),
+                          "approvals": approvals})
             history.append(
                 f"Q{quest_i + 1}: {'SUCCESS' if success else 'FAIL'} "
                 f"({n_fail} fail card(s)) team={approved_team}"

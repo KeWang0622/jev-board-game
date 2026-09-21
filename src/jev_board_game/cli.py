@@ -164,13 +164,6 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.web:
-        if args.game == "avalon":
-            print(
-                "The web viewer does not support Avalon yet — use --watch for the "
-                "terminal God's-eye view.",
-                file=sys.stderr,
-            )
-            return 2
         from .webexport import export_html, game_to_dict
 
         n_games = max(1, args.games)

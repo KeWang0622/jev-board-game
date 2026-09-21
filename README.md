@@ -15,6 +15,8 @@
 
 <p align="center"><img src="docs/hero.png" alt="God's-eye web viewer: players around a table with suspicion arrows, a per-agent readout (clue, accusation, reason, belief bars), and a full Jev decision log." width="900"></p>
 
+<p align="center"><b>▶ Live demo (God's-eye viewer, all three games):</b> <a href="https://kewang0622.github.io/jev-board-game/">kewang0622.github.io/jev-board-game</a></p>
+
 ---
 
 ## Why this exists
@@ -43,7 +45,7 @@ model for a belief and correcting it, the belief *is* the model's direct answer:
 | --- | --- |
 | **Undercover** (Who-Is-The-Spy) | ✅ fully implemented (reference game) |
 | **Werewolf** / Mafia | ✅ fully implemented (werewolves, seer, villagers; night kill + inspect + day vote) |
-| **Avalon** (The Resistance) | ✅ engine + terminal + analysis (quests, approval votes, sabotage, Assassin's Merlin guess) · web viewer pending |
+| **Avalon** (The Resistance) | ✅ fully implemented (quests, approval votes, sabotage, Assassin's Merlin guess) with a quest-board web viewer |
 
 Everything runs **offline with no API key** via a deterministic stand-in backend, so
 the demo, experiments, and CI work out of the box. Set `TYPESAFE_API_KEY` to swap in
@@ -76,15 +78,21 @@ jev-undercover --game werewolf --watch --players 6 --seed 4
 jev-undercover --game werewolf --web werewolf-viewer.html --games 6 && open werewolf-viewer.html
 jev-undercover --game werewolf --games 40 --players 6 --werewolves 1
 
-# AVALON (terminal watch + stats; web viewer pending)
+# AVALON (--watch / --web / stats)
 jev-undercover --game avalon --watch --players 6 --seed 5
+jev-undercover --game avalon --web avalon-viewer.html --games 6 && open avalon-viewer.html
 jev-undercover --game avalon --games 40 --players 6
+
+# Cross-game calibration benchmark (offline, or --backend live with a key)
+python scripts/benchmark.py --games 50
 
 # real Jev (needs TYPESAFE_API_KEY); dump machine-readable results
 jev-undercover --backend live --games 50 --players 5 --json runs/live.json
 ```
 
 <p align="center"><img src="docs/werewolf.png" alt="Werewolf God's-eye view: roles revealed, a night kill and seer inspection, day statements, and the town's suspicion converging on the werewolf." width="900"></p>
+
+<p align="center"><img src="docs/avalon.png" alt="Avalon God's-eye view: a quest tracker, proposed team, approve/reject votes, quest success/fail, and each good player's belief over who is evil." width="900"></p>
 
 The web viewer shows the table with speech-bubble clues and suspicion/vote arrows, a
 per-agent readout (**what each Jev said, who it accuses, its reason, and its belief
